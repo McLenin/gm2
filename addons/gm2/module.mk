@@ -2,6 +2,7 @@ DIR          := addons/gm2
 MODNAME      := libgm2
 
 LIBGM2_SRC := \
+		$(DIR)/ffunctions.cpp \
 		$(DIR)/gm2.cpp
 
 LIBGM2_OBJ := \
