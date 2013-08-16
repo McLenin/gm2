@@ -82,6 +82,8 @@ ALGORITHMS="all"
 available_algorithms="two_scale lattice"
 # models that will be compiled
 MODELS="all"
+# addons that will be compiled
+ADDONS="none"
 
 #_____________________________________________________________________
 write_configure_parameters() {
@@ -513,6 +515,31 @@ check_models() {
 }
 
 #_____________________________________________________________________
+check_addons() {
+    addons=`echo $ADDONS | tr ',' ' '`
+    ADDONS=""
+    for a in ${addons}; do
+        case "$a" in
+            all)
+                ADDONS=`find $BASEDIR/addons/* -maxdepth 0 -type d -print0 | tr '\0' ' ' | sed -e 's|^\./||' -e 's| \./| |g' -e 's| *$||g'`
+                break ;;
+            none)
+                ADDONS=""
+                break ;;
+            *)
+                if test -d "$BASEDIR/addons/$a" ; then
+                    ADDONS="$ADDONS addons/$a"
+                    continue
+                else
+                    message "Error: addon directory \"$BASEDIR/addons/$a\" does not exist!"
+                    message "Please create the directory and put an addon in it."
+                    exit 1
+                fi ;;
+        esac
+    done
+}
+
+#_____________________________________________________________________
 check_boost_test_libs() {
     check_library "libboost_unit_test_framework" "$boost_lib_dir" \
 	"$default_lib_paths"
@@ -874,6 +901,9 @@ enable/disable options, prefix with either --enable- or --disable-
 
 with options, prefix with --with-, enables corresponding support
 
+  addons            Comma separated list of addons to be build
+                    (default: $ADDONS)
+                    possible values: all none <addon1>,<addon2>,...
   algorithms        Comma separated list of RG solver algorithms
                     (default: $ALGORITHMS)
                     possible values: all $available_algorithms
@@ -957,6 +987,7 @@ if test $# -gt 0 ; then
                     echo "Invalid option '$1'. Try $0 --help" ; exit 1 ;
                 fi
                 ;;
+            --with-addons=*)         ADDONS=$optarg ;;
             --with-algorithms=*)     ALGORITHMS=$optarg ;;
             --with-boost-libdir=*)   boost_lib_dir=$optarg ;;
             --with-boost-incdir=*)   boost_inc_dir=$optarg ;;
@@ -1003,12 +1034,14 @@ fi
 check_makelib
 check_math_cmd
 check_models
+check_addons
 
 enable_defines
 
 sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
     -e "s|@PKGNAME@|$PROGRAM_NAME|"    \
     -e "s|@ABSBASEDIR@|$ABSBASEDIR|"   \
+    -e "s|@ADDONS@|$ADDONS|"           \
     -e "s|@ALGORITHMS@|$ALGORITHMS|"   \
     -e "s|@BOOSTTESTLIBS@|$BOOSTTESTLIBS|"     \
     -e "s|@BOOSTTHREADLIBS@|$BOOSTTHREADLIBS|"     \
@@ -1036,6 +1069,7 @@ sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
 
 sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
     -e "s|@PKGNAME@|$PROGRAM_NAME|"    \
+    -e "s|@ADDONS@|$ADDONS|"           \
     -e "s|@CPPFLAGS@|$CPPFLAGS|"       \
     -e "s|@CXXFLAGS@|$CXXFLAGS|"       \
     -e "s|@CXX@|$CXX|"                 \

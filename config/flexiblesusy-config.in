@@ -2,6 +2,7 @@
 
 # Author: Alexander Voigt
 
+addons="@ADDONS@"
 models="@MODELS@"
 version="@VERSION@"
 cppflags="@CPPFLAGS@"
@@ -15,9 +16,9 @@ math="@MATH@"
 packagename="@PKGNAME@"
 
 usage="\
-Usage: `basename $0` [--all-models] [--cxx] [--cxxflags] [--cppflags]\
- [--fc] [--fflags] [--flibs] [--make-lib-cmd] [--math-cmd] [--with-<model>]\
- [--help] [--version]"
+Usage: `basename $0` [--all-addons] [--all-models] [--cxx] [--cxxflags]\
+ [--cppflags] [--fc] [--fflags] [--flibs] [--make-lib-cmd] [--math-cmd]\
+ [--with-<model>] [--help] [--version]"
 
 if test $# -eq 0; then
     echo "${usage}" 1>&2
@@ -26,6 +27,7 @@ fi
 
 help() {
     echo "Usage: `basename $0` [options]"
+    echo "  --all-addons          Print all addons that are build"
     echo "  --all-models          Print all models that are build"
     echo "  --cxx                 Print C++ compiler"
     echo "  --cxxflags            Print CXXFLAGS"
@@ -49,6 +51,7 @@ while test $# -gt 0; do
     esac
 
     case $1 in
+        --all-addons)    out="$out $addons"   ;;
         --all-models)    out="$out $models"   ;;
         --cxx)           out="$out $cxx"      ;;
         --cxxflags)      out="$out $cxxflags" ;;

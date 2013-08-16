@@ -1,6 +1,7 @@
 MODELS     := @MODELS@
+ADDONS     := @ADDONS@
 MODULES    := config src legacy slhaea meta templates $(MODELS) test examples \
-              addons/gm2 doc
+              $(ADDONS) doc
 CPPFLAGS   := @CPPFLAGS@ $(patsubst %,-I%,$(MODULES)) -I.
 CXXFLAGS   := @CXXFLAGS@
 FFLAGS     := @FFLAGS@
@@ -115,6 +116,7 @@ showbuild:
 	@echo "ALGORITHMS = $(ALGORITHMS)"
 	@echo "MATH       = $(MATH)"
 	@echo "MODELS     = $(MODELS)"
+	@echo "ADDONS     = $(ADDONS)"
 	@echo ""
 	@echo "The list of modules to be built:"
 	@echo "--------------------------------"
