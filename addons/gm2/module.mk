@@ -47,8 +47,8 @@ $(LIBGM2_DEP) $(LIBGM2_OBJ) $(DIR)/gm2.o: CPPFLAGS += $(EIGENFLAGS)
 $(LIBGM2): $(LIBGM2_OBJ)
 		$(MAKELIB) $@ $^
 
-$(GM2_EXE): $(DIR)/gm2.o $(LIBGM2) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(abspath $^) $(FLIBS)
+$(GM2_EXE): $(DIR)/gm2.o $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
+		$(CXX) -o $@ $(abspath $^) $(GSLLIBS) $(FLIBS)
 
 ALLDEP += $(LIBGM2_DEP)
 ALLLIB += $(LIBGM2)
