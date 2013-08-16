@@ -1,5 +1,6 @@
 MODELS     := @MODELS@
-MODULES    := config src legacy slhaea meta templates $(MODELS) test examples doc
+MODULES    := config src legacy slhaea meta templates $(MODELS) test examples \
+              addons/gm2 doc
 CPPFLAGS   := @CPPFLAGS@ $(patsubst %,-I%,$(MODULES)) -I.
 CXXFLAGS   := @CXXFLAGS@
 FFLAGS     := @FFLAGS@
