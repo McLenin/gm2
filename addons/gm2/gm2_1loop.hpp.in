@@ -21,6 +21,8 @@
 #ifndef GM2_1LOOP_H
 #define GM2_1LOOP_H
 
+#include "ffunctions.hpp"
+
 namespace flexiblesusy {
 namespace gm2 {
 

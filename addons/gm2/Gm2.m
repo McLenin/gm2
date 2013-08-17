@@ -3,6 +3,11 @@ BeginPackage["Gm2`", {"SARAH`", "TextFormatting`", "CConversion`", "WriteOut`"}]
 
 MakeGm2::usage="Calculates g-2 and converts it to C++ code";
 
+F1C;
+F2C;
+F1N;
+F2N;
+
 Print["*****************************************************"];
 Print["G-2 addon version 0.0 for FlexibleSUSY ",
       Get[FileNameJoin[{Global`$flexiblesusyConfigDir,"version"}]]];
@@ -13,7 +18,7 @@ Begin["Private`"];
 
 CalculateGm2OneLoop[] :=
     Module[{result},
-           result = 1 / (16 Pi^2);
+           result = 1 / (16 Pi^2) ( F1C[0.5] + F2C[0.2] );
            Return[result];
           ];
 
