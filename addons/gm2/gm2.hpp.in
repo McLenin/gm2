@@ -18,8 +18,8 @@
 
 // File generated at @DateAndTime@
 
-#ifndef @ModelName@_GM2_H
-#define @ModelName@_GM2_H
+#ifndef GM2_H
+#define GM2_H
 
 namespace flexiblesusy {
 
