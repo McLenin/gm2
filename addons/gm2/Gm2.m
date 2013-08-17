@@ -11,6 +11,18 @@ Print[""];
 
 Begin["Private`"];
 
+CalculateGm2OneLoop[] :=
+    Module[{result},
+           result = 1 / (16 Pi^2);
+           Return[result];
+          ];
+
+CalculateGm2TwoLoop[] :=
+    Module[{result},
+           result = 1 / (16 Pi^2)^2;
+           Return[result];
+          ];
+
 WriteGm2[gm2_List, files_List] :=
     Module[{gm2Str},
            (* converting g-2 expressions to C++ r-values *)
@@ -32,8 +44,8 @@ MakeGm2[] :=
            Print["Calculating g-2"];
            Print["---------------"];
            (* calculation comes here *)
-           gm2oneLoop = 0;
-           gm2twoLoop = 0;
+           gm2oneLoop = CalculateGm2OneLoop[];
+           gm2twoLoop = CalculateGm2TwoLoop[];
 
            Print["------------------------"];
            Print["Creating C++ source code"];

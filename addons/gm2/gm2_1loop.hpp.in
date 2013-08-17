@@ -26,7 +26,7 @@ namespace gm2 {
 
 /// calculates g-2 at the one-loop level
 template <class ModelClass>
-double calculate_gm2_1loop(const ModelClass& model)
+double calculate_gm2_1loop(const ModelClass& /* model */)
 {
    const double gm2 = @gm2_1l@;
 
