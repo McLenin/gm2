@@ -43,7 +43,11 @@ MakeGm2[] :=
                     {{FileNameJoin[{Global`$addonTemplateDir, "gm2.hpp.in"}],
                       FileNameJoin[{Global`$addonOutputDir  , "gm2.hpp"}]},
                      {FileNameJoin[{Global`$addonTemplateDir, "gm2.cpp.in"}],
-                      FileNameJoin[{Global`$addonOutputDir  , "gm2.cpp"}]}
+                      FileNameJoin[{Global`$addonOutputDir  , "gm2.cpp"}]},
+                     {FileNameJoin[{Global`$addonTemplateDir, "gm2_1loop.hpp.in"}],
+                      FileNameJoin[{Global`$addonOutputDir  , "gm2_1loop.hpp"}]},
+                     {FileNameJoin[{Global`$addonTemplateDir, "gm2_1loop.cpp.in"}],
+                      FileNameJoin[{Global`$addonOutputDir  , "gm2_1loop.cpp"}]}
                     }];
 
            Print["------------"];

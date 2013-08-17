@@ -3,7 +3,8 @@ MODNAME      := libgm2
 
 LIBGM2_SRC := \
 		$(DIR)/ffunctions.cpp \
-		$(DIR)/gm2.cpp
+		$(DIR)/gm2.cpp \
+		$(DIR)/gm2_1loop.cpp
 
 LIBGM2_OBJ := \
 		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_SRC)))
@@ -18,7 +19,9 @@ LIBGM2_META := \
 
 LIBGM2_TEMPLATES := \
 		$(DIR)/gm2.cpp.in \
-		$(DIR)/gm2.hpp.in
+		$(DIR)/gm2.hpp.in \
+		$(DIR)/gm2_1loop.cpp.in \
+		$(DIR)/gm2_1loop.hpp.in
 
 GM2_EXE    := $(DIR)/gm2.x
 
@@ -41,6 +44,12 @@ $(DIR)/gm2.cpp: $(DIR)/start.m $(LIBGM2_META) $(LIBGM2_TEMPLATES) $(META_SRC) $(
 		$(MATH) -run "Get[\"$<\"]; Quit[]"
 
 $(DIR)/gm2.hpp: $(DIR)/gm2.cpp
+		@true
+
+$(DIR)/gm2_1loop.cpp: $(DIR)/gm2.cpp
+		@true
+
+$(DIR)/gm2_1loop.hpp: $(DIR)/gm2.cpp
 		@true
 
 $(LIBGM2_DEP) $(LIBGM2_OBJ) $(DIR)/gm2.o: CPPFLAGS += $(EIGENFLAGS)

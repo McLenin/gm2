@@ -18,18 +18,10 @@
 
 // File generated at @DateAndTime@
 
-#include "logger.hpp"
 #include "gm2_1loop.hpp"
-#include "@ModelName@_two_scale_model.hpp"
 
-using namespace flexiblesusy;
+namespace flexiblesusy {
+namespace gm2 {
 
-int main()
-{
-   @ModelName@<Two_scale> model;
-
-   const double gm2_1l = gm2::calculate_gm2_1loop(model);
-   INFO("g-2 (1-loop) = " << gm2_1l);
-
-   return 0;
-}
+} // namespace gm2
+} // namespace flexiblesusy
