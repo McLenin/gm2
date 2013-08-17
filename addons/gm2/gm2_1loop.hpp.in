@@ -26,7 +26,13 @@
 namespace flexiblesusy {
 namespace gm2 {
 
-/// calculates g-2 at the one-loop level
+/**
+ * Calculates g-2 at the one-loop level
+ *
+ * @param model consistent set of tree-level model parameters
+ *
+ * @return g-2 at the one-loop level
+ */
 template <class ModelClass>
 double calculate_gm2_1loop(const ModelClass& /* model */)
 {
