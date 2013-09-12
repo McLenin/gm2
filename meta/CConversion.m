@@ -50,7 +50,7 @@ form sum[index,1,3,expression]"
 
 MakeUnique::usage="create a unique symbol from a string";
 
-Begin["Private`"];
+Begin["`Private`"];
 
 (* This rule is essential for the ExpandSums[] function.
  * It prevents the following bug:
@@ -171,6 +171,18 @@ MakeUnique[name_String] :=
 MakeUniqueStr[name_String] :=
     ToString[MakeUnique[name]];
 
+(* checks if sym contains a greek symbol *)
+GreekQ[sym_] :=
+    (Plus @@ (StringCount[ToString[sym], #]& /@
+              {"\[Alpha]", "\[Beta]", "\[Gamma]", "\[Delta]", "\[Epsilon]",
+               "\[CurlyEpsilon]", "\[Zeta]", "\[Eta]", "\[Theta]",
+               "\[CurlyTheta]", "\[Iota]", "\[Kappa]", "\[CurlyKappa]",
+               "\[Lambda]", "\[Mu]", "\[Nu]", "\[Xi]", "\[Omicron]",
+               "\[Pi]", "\[CurlyPi]", "\[Rho]", "\[CurlyRho]",
+               "\[Sigma]", "\[FinalSigma]", "\[Tau]", "\[Upsilon]",
+               "\[Phi]", "\[CurlyPhi]", "\[Chi]", "\[Psi]", "\[Omega]",
+               "\[Digamma]", "\[Koppa]", "\[Stigma]", "\[Sampi]"})) > 0;
+
 ConvertGreekLetters[text_] :=
    Symbol[StringReplace[ToString[text], {
        (* replace greek symbol by uniqe greek symbol string only if
@@ -270,8 +282,21 @@ ToValidCSymbol[symbol_ /; Length[symbol] > 0] :=
 ToValidCSymbolString[symbol_] :=
     ToString[ToValidCSymbol[symbol]];
 
-Format[SARAH`Conj[x_],CForm]            :=
-    If[SARAH`getDimParameters[x] === {} || SARAH`getDimParameters[x] === {0},
+Format[SARAH`L[x_],CForm] :=
+    Format[ToValidCSymbol[SARAH`L[x /. FlexibleSUSY`GreekSymbol -> Identity]], OutputForm];
+
+Format[SARAH`B[x_],CForm] :=
+    Format[ToValidCSymbol[SARAH`B[x /. FlexibleSUSY`GreekSymbol -> Identity]], OutputForm];
+
+Format[SARAH`T[x_],CForm] :=
+    Format[ToValidCSymbol[SARAH`T[x /. FlexibleSUSY`GreekSymbol -> Identity]], OutputForm];
+
+Format[FlexibleSUSY`GreekSymbol[x_],CForm] :=
+    Format[ToValidCSymbol[x], OutputForm];
+
+Format[SARAH`Conj[x_],CForm] :=
+    If[SARAH`getDimParameters[x /. FlexibleSUSY`GreekSymbol -> Identity] === {} ||
+       SARAH`getDimParameters[x /. FlexibleSUSY`GreekSymbol -> Identity] === {0},
        Format["Conj(" <> ToString[CForm[x]] <> ")", OutputForm],
        Format[ToString[CForm[x]] <> ".conjugate()", OutputForm]
       ];
@@ -304,8 +329,12 @@ Format[SARAH`trace[HoldPattern[x_]],CForm] :=
  * etc.
  *)
 RValueToCFormString[expr_] :=
-    Module[{times, result},
+    Module[{times, result, symbols, greekSymbols, greekSymbolsRules},
+           symbols = Cases[{expr}, x_Symbol | x_Symbol[__] :> x, Infinity];
+           greekSymbols = Select[symbols, GreekQ];
+           greekSymbolsRules = Rule[#, FlexibleSUSY`GreekSymbol[#]]& /@ greekSymbols;
            result = expr /.
+                    greekSymbolsRules /.
                     SARAH`Mass -> FlexibleSUSY`M //. {
                     SARAH`A0[SARAH`Mass2[a_]]              :> SARAH`A0[FlexibleSUSY`M[a]],
                     SARAH`B0[a___, SARAH`Mass2[b_], c___]  :> SARAH`B0[a,FlexibleSUSY`M[b],c],

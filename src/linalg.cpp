@@ -86,14 +86,6 @@ void DoubleVector::swap(int i, int j) {
   (*this)(i) = m;
 }
 
-bool DoubleVector::testNan() const
-{
-   for (std::size_t i = 0; i < x.size(); ++i)
-      if (::testNan(x[i]))
-         return true;
-   return false;
-}
-
 /*
  *  STANDARD INPUT / OUTPUT
  */
@@ -254,14 +246,6 @@ void DoubleMatrix::resize(int numberOfRows, int numberOfCols)
    setRows(numberOfRows);
 }
 
-bool DoubleMatrix::testNan() const
-{
-   for (std::size_t i = 0; i < x.size(); ++i)
-      if (::testNan(x[i]))
-         return true;
-   return false;
-}
-
 double DoubleMatrix::trace() const {
 #ifdef ARRAY_BOUNDS_CHECKING
   if (rows != cols)  {
@@ -350,7 +334,8 @@ void DoubleMatrix::symmetrise() {
   }
 #endif
   for (int i=1; i<=rows; ++i)
-    col(i) = row(i);
+     for (int k = 1; k < i && k <= cols; ++k)
+        elmt(i,k) = elmt(k,i);
 }
 
 // Gives sum of difference between two matrices
@@ -677,6 +662,18 @@ DoubleMatrix rot2dTwist(double theta) {
   n(2, 1) = cos(theta); 
   n(2, 2) = sin(theta);
   return n;
+}
+
+// LCT: 3 dimensional rotation matrix U
+// Returns U = [ cos theta  sin theta   0 ]
+//             [ sin theta  -cos theta  0 ]
+//             [ 0          0           1 ]
+DoubleMatrix rot3d(double theta) {
+  DoubleMatrix u(3, 3);
+  u(1, 1) = -cos(theta); u(2, 2) = -u(1, 1);
+  u(1, 2) = sin(theta);  u(2, 1) = u(1, 2);
+  u(3, 3) = 1.0;
+  return u;
 }
 
 // Redefines mixing matrices to be complex such that diagonal values are
@@ -1253,7 +1250,8 @@ void ComplexMatrix::symmetrise() {
   }
 #endif
   for (int i=1; i<=rows; ++i)
-    col(i) = row(i);
+     for (int k = 1; k < i && k <= cols; ++k)
+        elmt(i,k) = elmt(k,i);
 }
 
 // Gives sum of difference between two matrices

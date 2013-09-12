@@ -12,6 +12,10 @@ BASEDIR=$(dirname $0)
 # absolute path to this script
 ABSBASEDIR=$(cd $BASEDIR; pwd)
 
+# platform information
+linuxdist=""
+debmultiarch=""
+
 # default library directories
 default_lib_paths="/usr/lib /usr/local/lib"
 default_inc_paths="/usr/include /usr/local/include"
@@ -207,6 +211,13 @@ check_library() {
 	for p in ${libdirs}; do
             libdir32=`echo "$p" | grep lib | sed -e 's|lib$|lib32|g' -e 's|lib/|lib32/|g'`
             libdirs="$libdirs $libdir32"
+	done
+    fi
+    # look first in the DEB_HOST_MULTIARCH directories
+    if test "x$debmultiarch" != "x" ; then
+	for p in ${libdirs}; do
+            multiarch_libdir=`echo "$p" | sed "s|lib$|lib/$debmultiarch|"`
+            libdirs="$multiarch_libdir $libdirs"
 	done
     fi
 
@@ -540,6 +551,33 @@ check_addons() {
 }
 
 #_____________________________________________________________________
+check_platform() {
+    # checks which platform we have
+    linuxdist=""
+    debmultiarch=""
+
+    exists_in_path "lsb_release"
+    if [ -n "$cmd" ] ; then
+        if lsb_release -d | grep -i 'ubuntu\|debian\|mint' > /dev/null 2>& 1; then
+            linuxdist="multiarch"
+        fi
+    fi
+
+    if test "x$linuxdist" = "xmultiarch"; then
+        if `which dpkg-architecture > /dev/null 2>&1` ; then
+            if `dpkg-architecture -qDEB_HOST_MULTIARCH > /dev/null 2>&1` ; then
+                checking_msg "dpkg-architecture"
+                debmultiarch=`dpkg-architecture -qDEB_HOST_MULTIARCH 2> /dev/null`
+                result "$debmultiarch"
+            fi
+        else
+            result "`basename $0`: dpkg-architecture MUST be installed"
+            exit 1
+        fi
+    fi
+}
+
+#_____________________________________________________________________
 check_boost_test_libs() {
     check_library "libboost_unit_test_framework" "$boost_lib_dir" \
 	"$default_lib_paths"
@@ -576,7 +614,7 @@ check_boost_test_incl() {
 check_boost_thread_libs() {
     check_library "libboost_thread libboost_thread-mt" \
 	"$boost_lib_dir" "$default_lib_paths"
-    if [ -z "x$found_lib" ]; then
+    if [ -z "$found_lib" ]; then
         message "Error: libboost_thread or libboost_thread-mt must be installed"
         message "  to enable multithreading in the lattice method, see http://www.boost.org"
         message "  You can disable the lattice method with the --with-algorithms= flag."
@@ -595,8 +633,15 @@ check_boost_thread_libs() {
     BOOSTTHREADLIBS_="$BOOSTTHREADLIBS_ "-l$(
 	echo -n "$found_lib" | sed 's/^lib\(.*\)\..*$/\1/')
 
-    # can we safely assume libpthread is there?
-    BOOSTTHREADLIBS_="$BOOSTTHREADLIBS_ -lpthread"
+    check_library "libpthread" "" "$default_lib_paths"
+    if [ -z "$found_lib" ]; then
+        message "Error: libpthread must be installed to enable multithreading"
+        message "  in the lattice method.  You can disable the lattice method"
+        message "  with the --with-algorithms= flag."
+        exit 1
+    fi
+    BOOSTTHREADLIBS_="$BOOSTTHREADLIBS_ "-l$(
+        echo -n "$found_lib" | sed 's/^lib\(.*\)\..*$/\1/')
 
     if [ -z "$boost_lib_dir" ]; then
         # assume that the linker will look in the default paths
@@ -1027,6 +1072,7 @@ if test $# -gt 0 ; then
 fi
 
 guess_machine_word_size
+check_platform
 
 check_algorithms
 check_boost_test_incl

@@ -40,7 +40,7 @@ MZ;
 
 FSEigenstates;
 
-Begin["Private`"];
+Begin["`Private`"];
 
 allParameters = {};
 
@@ -165,6 +165,7 @@ GeneralReplacementRules[] :=
       "@BottomQuark@" -> ToValidCSymbolString[SARAH`BottomQuark],
       "@Electron@"    -> ToValidCSymbolString[SARAH`Electron],
       "@Neutrino@"    -> ToValidCSymbolString[SARAH`Neutrino],
+      "@HiggsBoson@"  -> ToValidCSymbolString[SARAH`HiggsBoson],
       "@UpYukawa@"       -> ToValidCSymbolString[SARAH`UpYukawa],
       "@DownYukawa@"     -> ToValidCSymbolString[SARAH`DownYukawa],
       "@ElectronYukawa@" -> ToValidCSymbolString[SARAH`ElectronYukawa],
@@ -177,6 +178,7 @@ GeneralReplacementRules[] :=
       "@leftCouplingInverseGutNormalization@" -> RValueToCFormString[1/Parameters`GetGUTNormalization[SARAH`leftCoupling]],
       "@ModelName@"           -> FlexibleSUSY`FSModelName,
       "@numberOfModelParameters@" -> ToString[numberOfModelParameters],
+      "@InputParameter_" ~~ num_ ~~ "@" /; IntegerQ[ToExpression[num]] :> CConversion`ToValidCSymbolString[FlexibleSUSY`InputParameters[[ToExpression[num]]]],
       "@DateAndTime@"         -> DateString[]
     }
 
@@ -189,7 +191,7 @@ WriteRGEClass[betaFun_List, anomDim_List, files_List,
            anomDimPrototypes, anomDimFunctions, printParameters, parameters,
            numberOfParameters, clearParameters},
           (* extract list of parameters from the beta functions *)
-          parameters = GetName[#]& /@ betaFun;
+          parameters = BetaFunction`GetName[#]& /@ betaFun;
           (* count number of parameters *)
           numberOfParameters = BetaFunction`CountNumberOfParameters[betaFun] + numberOfBaseClassParameters;
           (* create C++ functions and parameter declarations *)
@@ -292,6 +294,7 @@ WriteConvergenceTesterClass[particles_List, files_List] :=
 
 WriteModelClass[massMatrices_List, ewsbEquations_List,
                 parametersFixedByEWSB_List, nPointFunctions_List, phases_List,
+                enablePoleMassThreads_,
                 files_List, diagonalizationPrecision_List] :=
     Module[{massGetters = "", k,
             mixingMatrixGetters = "",
@@ -349,14 +352,14 @@ WriteModelClass[massMatrices_List, ewsbEquations_List,
            phasesDefinition             = Phases`CreatePhasesDefinition[phases];
            phasesGetterSetters          = Phases`CreatePhasesGetterSetters[phases];
            phasesInit                   = Phases`CreatePhasesInitialization[phases];
-           loopMassesPrototypes         = LoopMasses`CreateLoopMassPrototypes[];
+           loopMassesPrototypes         = LoopMasses`CreateOneLoopPoleMassPrototypes[];
            (* If you want to add tadpoles, call the following routine like this:
-              CreateLoopMassFunctions[diagonalizationPrecision, oneLoopTadpoles, vevs];
+              CreateOneLoopPoleMassFunctions[diagonalizationPrecision, oneLoopTadpoles, vevs];
               *)
-           loopMassesFunctions          = LoopMasses`CreateLoopMassFunctions[diagonalizationPrecision, {}, {}];
+           loopMassesFunctions          = LoopMasses`CreateOneLoopPoleMassFunctions[diagonalizationPrecision, {}, {}];
            runningDRbarMassesPrototypes = LoopMasses`CreateRunningDRbarMassPrototypes[];
            runningDRbarMassesFunctions  = LoopMasses`CreateRunningDRbarMassFunctions[];
-           callAllLoopMassFunctions     = LoopMasses`CallAllLoopMassFunctions[];
+           callAllLoopMassFunctions     = LoopMasses`CallAllOneLoopPoleMassFunctions[FlexibleSUSY`FSEigenstates, enablePoleMassThreads];
            masses                       = FlexibleSUSY`M[TreeMasses`GetMassEigenstate[#]]& /@ massMatrices;
            printMasses                  = WriteOut`PrintParameters[masses, "ostr"];
            mixingMatrices               = Flatten[TreeMasses`GetMixingMatrixSymbol[#]& /@ massMatrices];
@@ -550,7 +553,7 @@ PrepareRGEs[] :=
            betas = { SARAH`BetaWijkl, SARAH`BetaYijk, SARAH`BetaMuij,
                      SARAH`BetaLi, SARAH`BetaGauge, SARAH`BetaVEV,
                      SARAH`BetaQijkl, SARAH`BetaTijk, SARAH`BetaBij,
-                     SARAH`BetaSLi, SARAH`Betam2ij, SARAH`BetaMi,
+                     SARAH`BetaLSi, SARAH`Betam2ij, SARAH`BetaMi,
                      SARAH`BetaDGi };
            If[Head[#] === Symbol && !ValueQ[#], Set[#,{}]]& /@ betas;
            If[!ValueQ[SARAH`Gij] || Head[SARAH`Gij] =!= List,
@@ -650,13 +653,13 @@ Options[MakeFlexibleSUSY] :=
         defaultDiagonalizationPrecision -> MediumPrecision,
         highPrecision -> {},
         mediumPrecision -> {},
-        lowPrecision -> {}
+        lowPrecision -> {},
+        EnablePoleMassThreads -> True
     };
 
 MakeFlexibleSUSY[OptionsPattern[]] :=
     Module[{nPointFunctions, runInputFile, initialGuesserInputFile,
             susyBetaFunctions, susyBreakingBetaFunctions,
-            susyParameterReplacementRules, susyBreakingParameterReplacementRules,
             numberOfSusyParameters, anomDim,
             ewsbEquations, massMatrices, phases, vevs,
             diagonalizationPrecision, allParticles, freePhases, fixedParameters},
@@ -712,20 +715,17 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
            susyBreakingBetaFunctions = { SARAH`BetaQijkl,
                                          SARAH`BetaTijk ,
                                          SARAH`BetaBij  ,
-                                         SARAH`BetaSLi  ,
+                                         SARAH`BetaLSi  ,
                                          SARAH`Betam2ij ,
                                          SARAH`BetaMi   ,
                                          SARAH`BetaDGi  };
 
            susyBetaFunctions = BetaFunction`ConvertSarahRGEs[susyBetaFunctions];
            susyBetaFunctions = Select[susyBetaFunctions, (BetaFunction`GetAllBetaFunctions[#]!={})&];
-           Parameters`AddRealParameter[(GetName /@ susyBetaFunctions) /. a_[i1,i2] :> a];
-           susyParameterReplacementRules = BetaFunction`ConvertParameterNames[susyBetaFunctions];
-           susyBetaFunctions = susyBetaFunctions /. susyParameterReplacementRules;
+           Parameters`AddRealParameter[(BetaFunction`GetName /@ susyBetaFunctions) /. a_[i1,i2] :> a];
 
            numberOfSusyParameters = BetaFunction`CountNumberOfParameters[susyBetaFunctions];
            anomDim = AnomalousDimension`ConvertSarahAnomDim[SARAH`Gij];
-           anomDim = anomDim /. BetaFunction`ConvertParameterNames[anomDim] /. susyParameterReplacementRules;
 
            PrintHeadline["Creating model parameter classes"];
            Print["Creating class for susy parameters ..."];
@@ -737,28 +737,26 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
 
            susyBreakingBetaFunctions = ConvertSarahRGEs[susyBreakingBetaFunctions];
            susyBreakingBetaFunctions = Select[susyBreakingBetaFunctions, (BetaFunction`GetAllBetaFunctions[#]!={})&];
-           Parameters`AddRealParameter[(GetName /@ susyBreakingBetaFunctions) /. a_[i1,i2] :> a];
-           susyBreakingParameterReplacementRules = Flatten[{susyParameterReplacementRules, BetaFunction`ConvertParameterNames[susyBreakingBetaFunctions]}];
-           susyBreakingBetaFunctions = susyBreakingBetaFunctions /. susyBreakingParameterReplacementRules;
+           Parameters`AddRealParameter[(BetaFunction`GetName /@ susyBreakingBetaFunctions) /. a_[i1,i2] :> a];
 
            allBetaFunctions = Join[susyBetaFunctions, susyBreakingBetaFunctions];
 
-           {traceDecl, traceRules} = CreateTraceAbbr[SARAH`TraceAbbr /. susyBreakingParameterReplacementRules];
+           {traceDecl, traceRules} = CreateTraceAbbr[SARAH`TraceAbbr];
            susyBreakingBetaFunctions = susyBreakingBetaFunctions /. traceRules;
 
            (* store all model parameters *)
-           allParameters = Join[GetName /@ susyBetaFunctions,
-                                GetName /@ susyBreakingBetaFunctions] /. a_[i1,i2] :> a;
+           allParameters = Join[BetaFunction`GetName /@ susyBetaFunctions,
+                                BetaFunction`GetName /@ susyBreakingBetaFunctions] /. a_[i1,i2] :> a;
            allIndexReplacementRules = Parameters`CreateIndexReplacementRules[allParameters];
            Parameters`SetModelParameters[allParameters];
-           FlexibleSUSY`FSLesHouchesList = SA`LHList /. susyBreakingParameterReplacementRules;
+           FlexibleSUSY`FSLesHouchesList = SA`LHList;
 
            (* search for unfixed parameters *)
            fixedParameters = Join[ParametersToSolveTadpoles,
                                   Constraint`FindFixedParametersFromConstraint[FlexibleSUSY`LowScaleInput],
                                   Constraint`FindFixedParametersFromConstraint[FlexibleSUSY`SUSYScaleInput],
                                   Constraint`FindFixedParametersFromConstraint[FlexibleSUSY`HighScaleInput]
-                                 ] /. susyBreakingParameterReplacementRules;
+                                 ];
            FlexibleSUSY`FSUnfixedParameters = FindUnfixedParameters[fixedParameters];
            If[FlexibleSUSY`FSUnfixedParameters =!= {} &&
               FlexibleSUSY`OnlyLowEnergyFlexibleSUSY =!= True,
@@ -766,8 +764,8 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
               Print["  ", FlexibleSUSY`FSUnfixedParameters];
              ];
            (* adding the types and their input names to the parameters *)
-           FlexibleSUSY`FSUnfixedParameters = Select[Join[{GetName[#], Symbol[ToValidCSymbolString[GetName[#]] <> "Input"], #[[2]]}& /@ susyBetaFunctions,
-                                                          {GetName[#], Symbol[ToValidCSymbolString[GetName[#]] <> "Input"], #[[2]]}& /@ susyBreakingBetaFunctions] /. a_[i1,i2] :> a,
+           FlexibleSUSY`FSUnfixedParameters = Select[Join[{BetaFunction`GetName[#], Symbol[ToValidCSymbolString[BetaFunction`GetName[#]] <> "Input"], #[[2]]}& /@ susyBetaFunctions,
+                                                          {BetaFunction`GetName[#], Symbol[ToValidCSymbolString[BetaFunction`GetName[#]] <> "Input"], #[[2]]}& /@ susyBreakingBetaFunctions] /. a_[i1,i2] :> a,
                                                      MemberQ[FlexibleSUSY`FSUnfixedParameters,#[[1]]]&];
            (* add the unfixed parameters to the susy scale constraint *)
            If[FlexibleSUSY`OnlyLowEnergyFlexibleSUSY === True,
@@ -811,9 +809,8 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
              ];
 
            freePhases = EWSB`CheckEWSBEquations[ewsbEquations, ParametersToSolveTadpoles];
-
-           ewsbEquations = ewsbEquations /.
-                           susyBreakingParameterReplacementRules;
+           (* remove free phases which are already defined in FlexibleSUSY`InputParameters *)
+           freePhases = Complement[freePhases, FlexibleSUSY`InputParameters];
 
            Print["Creating class for input parameters ..."];
            WriteInputParameterClass[FlexibleSUSY`InputParameters, freePhases,
@@ -825,7 +822,6 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
                                    ];
 
            massMatrices = ConvertSarahMassMatrices[] /.
-                          susyBreakingParameterReplacementRules /.
                           Parameters`ApplyGUTNormalization[] /.
                           { SARAH`sum[j_, start_, end_, expr_] :> (Sum[expr, {j,start,end}]) } /.
                           allIndexReplacementRules;
@@ -882,9 +878,9 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
 
            PrintHeadline["Creating constraints"];
            Print["Creating class for high-scale constraint ..."];
-           WriteConstraintClass[FlexibleSUSY`HighScale /. susyBreakingParameterReplacementRules,
-                                FlexibleSUSY`HighScaleInput /. susyBreakingParameterReplacementRules,
-                                FlexibleSUSY`HighScaleFirstGuess /. susyBreakingParameterReplacementRules,
+           WriteConstraintClass[FlexibleSUSY`HighScale,
+                                FlexibleSUSY`HighScaleInput,
+                                FlexibleSUSY`HighScaleFirstGuess,
                                 {{FileNameJoin[{Global`$flexiblesusyTemplateDir, "high_scale_constraint.hpp.in"}],
                                   FileNameJoin[{Global`$flexiblesusyOutputDir, FlexibleSUSY`FSModelName <> "_high_scale_constraint.hpp"}]},
                                  {FileNameJoin[{Global`$flexiblesusyTemplateDir, "two_scale_high_scale_constraint.hpp.in"}],
@@ -899,9 +895,9 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
                                ];
 
            Print["Creating class for susy-scale constraint ..."];
-           WriteConstraintClass[FlexibleSUSY`SUSYScale /. susyBreakingParameterReplacementRules,
-                                FlexibleSUSY`SUSYScaleInput /. susyBreakingParameterReplacementRules,
-                                FlexibleSUSY`SUSYScaleFirstGuess /. susyBreakingParameterReplacementRules,
+           WriteConstraintClass[FlexibleSUSY`SUSYScale,
+                                FlexibleSUSY`SUSYScaleInput,
+                                FlexibleSUSY`SUSYScaleFirstGuess,
                                 {{FileNameJoin[{Global`$flexiblesusyTemplateDir, "susy_scale_constraint.hpp.in"}],
                                   FileNameJoin[{Global`$flexiblesusyOutputDir, FlexibleSUSY`FSModelName <> "_susy_scale_constraint.hpp"}]},
                                  {FileNameJoin[{Global`$flexiblesusyTemplateDir, "two_scale_susy_scale_constraint.hpp.in"}],
@@ -916,8 +912,8 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
                                ];
 
            Print["Creating class for low-scale constraint ..."];
-           WriteConstraintClass[FlexibleSUSY`LowScale /. susyBreakingParameterReplacementRules,
-                                FlexibleSUSY`LowScaleInput /. susyBreakingParameterReplacementRules,
+           WriteConstraintClass[FlexibleSUSY`LowScale,
+                                FlexibleSUSY`LowScaleInput,
                                 FlexibleSUSY`LowScaleFirstGuess,
                                 {{FileNameJoin[{Global`$flexiblesusyTemplateDir, "low_scale_constraint.hpp.in"}],
                                   FileNameJoin[{Global`$flexiblesusyOutputDir, FlexibleSUSY`FSModelName <> "_low_scale_constraint.hpp"}]},
@@ -937,8 +933,8 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
            If[FlexibleSUSY`OnlyLowEnergyFlexibleSUSY,
               initialGuesserInputFile = "initial_guesser_low_scale_model";
              ];
-           WriteInitialGuesserClass[FlexibleSUSY`InitialGuessAtLowScale /. susyBreakingParameterReplacementRules,
-                                    FlexibleSUSY`InitialGuessAtHighScale /. susyBreakingParameterReplacementRules,
+           WriteInitialGuesserClass[FlexibleSUSY`InitialGuessAtLowScale,
+                                    FlexibleSUSY`InitialGuessAtHighScale,
                                     {{FileNameJoin[{Global`$flexiblesusyTemplateDir, "initial_guesser.hpp.in"}],
                                       FileNameJoin[{Global`$flexiblesusyOutputDir, FlexibleSUSY`FSModelName <> "_initial_guesser.hpp"}]},
                                      {FileNameJoin[{Global`$flexiblesusyTemplateDir, "two_scale_" <> initialGuesserInputFile <> ".hpp.in"}],
@@ -952,7 +948,6 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
                                     }
                                    ];
 
-           SelfEnergies`SetParameterReplacementRules[susyBreakingParameterReplacementRules];
            SelfEnergies`SetIndexReplacementRules[allIndexReplacementRules];
 
            phases = ConvertSarahPhases[SARAH`ParticlePhases];
@@ -969,7 +964,7 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
            Print["Creating class for model ..."];
            WriteModelClass[massMatrices, ewsbEquations,
                            ParametersToSolveTadpoles,
-                           nPointFunctions, phases,
+                           nPointFunctions, phases, OptionValue[EnablePoleMassThreads],
                            {{FileNameJoin[{Global`$flexiblesusyTemplateDir, "model.hpp.in"}],
                              FileNameJoin[{Global`$flexiblesusyOutputDir, FlexibleSUSY`FSModelName <> "_model.hpp"}]},
                             {FileNameJoin[{Global`$flexiblesusyTemplateDir, "two_scale_model.hpp.in"}],
@@ -988,10 +983,16 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
                            diagonalizationPrecision];
 
            Print["Creating user example spectrum generator program ..."];
-           runInputFile = "run.cpp.in";
-           If[FlexibleSUSY`OnlyLowEnergyFlexibleSUSY, runInputFile = "run_low_scale_model.cpp.in";];
-           WriteUserExample[{{FileNameJoin[{Global`$flexiblesusyTemplateDir, runInputFile}],
-                              FileNameJoin[{Global`$flexiblesusyOutputDir, "run_" <> FlexibleSUSY`FSModelName <> ".cpp"}]}}];
+           spectrumGeneratorInputFile = "spectrum_generator.hpp.in";
+           If[FlexibleSUSY`OnlyLowEnergyFlexibleSUSY,
+              spectrumGeneratorInputFile = "low_scale_spectrum_generator.hpp.in";];
+           WriteUserExample[{{FileNameJoin[{Global`$flexiblesusyTemplateDir, spectrumGeneratorInputFile}],
+                              FileNameJoin[{Global`$flexiblesusyOutputDir, FlexibleSUSY`FSModelName <> "_spectrum_generator.hpp"}]},
+                             {FileNameJoin[{Global`$flexiblesusyTemplateDir, "run.cpp.in"}],
+                              FileNameJoin[{Global`$flexiblesusyOutputDir, "run_" <> FlexibleSUSY`FSModelName <> ".cpp"}]},
+                             {FileNameJoin[{Global`$flexiblesusyTemplateDir, "scan.cpp.in"}],
+                              FileNameJoin[{Global`$flexiblesusyOutputDir, "scan_" <> FlexibleSUSY`FSModelName <> ".cpp"}]}
+                            }];
 
            PrintHeadline["FlexibleSUSY has finished"];
           ];

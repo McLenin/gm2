@@ -8,7 +8,7 @@ WriteSLHAMixingMatricesBlocks::usage="";
 WriteSLHAModelParametersBlocks::usage="";
 ReadUnfixedParameters::usage="";
 
-Begin["Private`"];
+Begin["`Private`"];
 
 (*
  * @brief Replaces tokens in files.
@@ -162,7 +162,7 @@ SortBlocks[modelParameters_List] :=
            reformed = LesHouchesNameToFront /@ modelParameters;
            allBlocks = DeleteDuplicates[Transpose[reformed][[1]]];
            collected = {#, Cases[reformed, {#, a_} :> a]}& /@ allBlocks;
-           collected = collected /. {a_Symbol} :> a
+           Return[collected];
           ];
 
 WriteSLHABlock[{blockName_, tuples_List}] :=
@@ -173,6 +173,12 @@ WriteSLHABlock[{blockName_, tuples_List}] :=
                     "block << \"Block " <> blockNameStr <> " Q= \" << FORMAT_NUMBER(" <>
                     scale <> ") << '\\n'\n";
            For[t = 1, t <= Length[tuples], t++,
+               If[Head[tuples[[t]]] =!= List || Length[tuples[[t]]] < 2,
+                  Print["WriteSLHABlock: Error: tuple ", tuples[[t]],
+                        " is not a list of lenght 2."];
+                  Print["  Tuples list: ", tuples];
+                  Continue[];
+                 ];
                parmStr = CConversion`ToValidCSymbolString[tuples[[t,1]]];
                pdg = ToString[tuples[[t,2]]];
                result = result <> "      << FORMAT_ELEMENT(" <> pdg <> ", " <>
@@ -186,6 +192,9 @@ WriteSLHABlock[{blockName_, tuples_List}] :=
 
 WriteSLHABlock[{blockName_, parameter_}] :=
     WriteSLHAMatrix[{parameter, blockName}, "MODELPARAMETER", "model.get_scale()"];
+
+WriteSLHABlock[{blockName_, {parameter_ /; Head[parameter] =!= List}}] :=
+    WriteSLHABlock[{blockName, parameter}];
 
 WriteSLHAModelParametersBlocks[] :=
     Module[{result = "", modelParameters, blocks},

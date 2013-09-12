@@ -18,43 +18,40 @@
 
 // File generated at @DateAndTime@
 
-#include "@ModelName@_input_parameters.hpp"
+#ifndef @ModelName@_SPECTRUM_GENERATOR_H
+#define @ModelName@_SPECTRUM_GENERATOR_H
+
 #include "@ModelName@_two_scale_model.hpp"
+#include "@ModelName@_two_scale_high_scale_constraint.hpp"
 #include "@ModelName@_two_scale_susy_scale_constraint.hpp"
 #include "@ModelName@_two_scale_low_scale_constraint.hpp"
 #include "@ModelName@_two_scale_convergence_tester.hpp"
 #include "@ModelName@_two_scale_initial_guesser.hpp"
 #include "@ModelName@_utilities.hpp"
-#include "@ModelName@_slha_io.hpp"
 
-#include "two_scale_running_precision.hpp"
-#include "two_scale_solver.hpp"
 #include "coupling_monitor.hpp"
 #include "error.hpp"
-#include "ew_input.hpp"
-#include "program_options.hpp"
-#include "lowe.h"
-#include "command_line_options.hpp"
-
-#include <iostream>
-#include <vector>
+#include "two_scale_running_precision.hpp"
+#include "two_scale_solver.hpp"
 
 namespace flexiblesusy {
 
 template <class T>
-class @ModelName@_runner {
+class @ModelName@_spectrum_generator {
 public:
-   @ModelName@_runner()
+   @ModelName@_spectrum_generator()
       : solver(), model()
+      , high_scale_constraint()
       , susy_scale_constraint()
       , low_scale_constraint()
-      , susy_scale(0.), low_scale(0.)
+      , high_scale(0.), susy_scale(0.), low_scale(0.)
       , parameter_output_scale(0.)
-      , precision_goal(1.0e-5)
+      , precision_goal(1.0e-4)
       , max_iterations(0)
       , calculate_sm_masses(false) {}
-   ~@ModelName@_runner() {}
+   ~@ModelName@_spectrum_generator() {}
 
+   double get_high_scale() const { return high_scale; }
    double get_susy_scale() const { return susy_scale; }
    double get_low_scale()  const { return low_scale;  }
    const @ModelName@<T>& get_model() const { return model; }
@@ -75,9 +72,10 @@ public:
 private:
    RGFlow<T> solver;
    @ModelName@<T> model;
+   @ModelName@_high_scale_constraint<T> high_scale_constraint;
    @ModelName@_susy_scale_constraint<T> susy_scale_constraint;
    @ModelName@_low_scale_constraint<T>  low_scale_constraint;
-   double susy_scale, low_scale;
+   double high_scale, susy_scale, low_scale;
    double parameter_output_scale; ///< output scale for running parameters
    double precision_goal; ///< precision goal
    unsigned max_iterations; ///< maximum number of iterations
@@ -87,7 +85,7 @@ private:
 /**
  * @brief Run's the RG solver with the given input parameters
  *
- * This function sets up the RG solver using a susy-scale
+ * This function sets up the RG solver using a high-scale, susy-scale
  * and low-scale constraint.  Afterwards the solver is run until
  * convergence is reached or an error occours.  Finally the particle
  * spectrum (pole masses) is calculated.
@@ -96,19 +94,22 @@ private:
  * @param input model input parameters
  */
 template <class T>
-void @ModelName@_runner<T>::run(const QedQcd& oneset,
+void @ModelName@_spectrum_generator<T>::run(const QedQcd& oneset,
                                 const @ModelName@_input_parameters& input)
 {
+   high_scale_constraint.reset();
    susy_scale_constraint.reset();
    low_scale_constraint .reset();
+   high_scale_constraint.set_input_parameters(input);
    susy_scale_constraint.set_input_parameters(input);
    low_scale_constraint .set_input_parameters(input);
 
    std::vector<Constraint<T>*> upward_constraints;
    upward_constraints.push_back(&low_scale_constraint);
-   upward_constraints.push_back(&susy_scale_constraint);
+   upward_constraints.push_back(&high_scale_constraint);
 
    std::vector<Constraint<T>*> downward_constraints;
+   downward_constraints.push_back(&high_scale_constraint);
    downward_constraints.push_back(&susy_scale_constraint);
    downward_constraints.push_back(&low_scale_constraint);
 
@@ -121,7 +122,8 @@ void @ModelName@_runner<T>::run(const QedQcd& oneset,
 
    @ModelName@_initial_guesser<T> initial_guesser(&model, input, oneset,
                                                   low_scale_constraint,
-                                                  susy_scale_constraint);
+                                                  susy_scale_constraint,
+                                                  high_scale_constraint);
    Two_scale_increasing_precision precision(10.0, precision_goal);
 
    solver.reset();
@@ -130,10 +132,11 @@ void @ModelName@_runner<T>::run(const QedQcd& oneset,
    solver.set_initial_guesser(&initial_guesser);
    solver.add_model(&model, upward_constraints, downward_constraints);
 
-   susy_scale = low_scale = 0.;
+   high_scale = susy_scale = low_scale = 0.;
 
    try {
       solver.solve();
+      high_scale = high_scale_constraint.get_scale();
       susy_scale = susy_scale_constraint.get_scale();
       low_scale  = low_scale_constraint.get_scale();
 
@@ -148,38 +151,33 @@ void @ModelName@_runner<T>::run(const QedQcd& oneset,
          if (model.run_to(parameter_output_scale))
             throw NonPerturbativeRunningError(parameter_output_scale);
       }
-   } catch (const NoConvergenceError& error) {
+   } catch (const NoConvergenceError&) {
       model.get_problems().flag_no_convergence();
-      ERROR(error.what());
-   } catch (const NonPerturbativeRunningError& error) {
+   } catch (const NonPerturbativeRunningError&) {
       model.get_problems().flag_no_perturbative();
-      ERROR(error.what());
    } catch (const Error& error) {
       model.get_problems().flag_thrown();
-      ERROR(error.what());
    } catch (const std::string& str) {
       model.get_problems().flag_thrown();
-      ERROR(str);
    } catch (const char* str) {
       model.get_problems().flag_thrown();
-      ERROR(str);
    }
 }
 
 /**
  * Create a text file which contains the values of all model
- * parameters at all scales between the low-scale and the susy-scale.
+ * parameters at all scales between the low-scale and the high-scale.
  *
  * @param filename name of output file
  */
 template <class T>
-void @ModelName@_runner<T>::write_running_couplings(const std::string& filename) const
+void @ModelName@_spectrum_generator<T>::write_running_couplings(const std::string& filename) const
 {
    @ModelName@<T> tmp_model(model);
    const unsigned error = tmp_model.run_to(low_scale);
    if (error) {
-      ERROR("@ModelName@_runner::write_running_couplings: run to scale "
-            << low_scale << " failed");
+      ERROR("@ModelName@_spectrum_generator::write_running_couplings:"
+            " run to scale " << low_scale << " failed");
       return;
    }
 
@@ -187,7 +185,7 @@ void @ModelName@_runner<T>::write_running_couplings(const std::string& filename)
    Coupling_monitor<@ModelName@<T>, @ModelName@_parameter_getter>
       coupling_monitor(tmp_model, parameter_getter);
 
-   coupling_monitor.run(low_scale, susy_scale, 100, true);
+   coupling_monitor.run(low_scale, high_scale, 100, true);
    coupling_monitor.write_to_file(filename);
 }
 
@@ -197,7 +195,7 @@ void @ModelName@_runner<T>::write_running_couplings(const std::string& filename)
  * @param filename output file name
  */
 template <class T>
-void @ModelName@_runner<T>::write_spectrum(const std::string& filename) const
+void @ModelName@_spectrum_generator<T>::write_spectrum(const std::string& filename) const
 {
    @ModelName@_spectrum_plotter plotter;
    plotter.extract_spectrum<T>(model);
@@ -206,60 +204,4 @@ void @ModelName@_runner<T>::write_spectrum(const std::string& filename) const
 
 } // namespace flexiblesusy
 
-int main(int argc, const char* argv[])
-{
-   using namespace flexiblesusy;
-   using namespace softsusy;
-   typedef Two_scale algorithm_type;
-
-   Command_line_options options(argc, argv);
-   if (options.must_exit())
-      return options.status();
-
-   const std::string slha_input_file(options.get_slha_input_file());
-   const std::string slha_output_file(options.get_slha_output_file());
-   @ModelName@_slha_io slha_io;
-   Program_options program_options;
-   QedQcd oneset;
-   @ModelName@_input_parameters input;
-
-   if (!slha_input_file.empty()) {
-      try {
-         slha_io.read_from_file(slha_input_file);
-         slha_io.fill(oneset);
-         slha_io.fill(input);
-         slha_io.fill(program_options);
-      } catch (const Error& error) {
-         ERROR(error.what());
-         return 1;
-      }
-   }
-   oneset.toMz(); // run SM fermion masses to MZ
-
-   @ModelName@_runner<algorithm_type> runner;
-   runner.set_precision_goal(program_options.get(Program_options::precision));
-   runner.set_max_iterations(program_options.get(Program_options::max_iterations));
-   runner.set_calculate_sm_masses(
-      program_options.get(Program_options::calculate_sm_masses) >= 1.0);
-   runner.set_parameter_output_scale(slha_io.get_parameter_output_scale());
-   runner.set_pole_mass_loop_order(
-      program_options.get(Program_options::pole_mass_loop_order));
-   runner.set_ewsb_loop_order(
-      program_options.get(Program_options::ewsb_loop_order));
-
-   runner.run(oneset, input);
-
-   if (slha_output_file.empty()) {
-      if (runner.get_problems().have_serious_problem())
-         runner.get_problems().print();
-      else
-         runner.get_model().print(std::cout);
-   } else {
-      slha_io.set_spinfo(runner.get_problems());
-      if (!runner.get_problems().have_serious_problem())
-         slha_io.set_spectrum(runner.get_model());
-      slha_io.write_to_file(slha_output_file);
-   }
-
-   return 0;
-}
+#endif

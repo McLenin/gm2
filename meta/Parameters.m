@@ -27,6 +27,8 @@ GetType::usage="";
 IsRealParameter::usage="";
 IsComplexParameter::usage="";
 IsRealExpression::usage="";
+IsMatrix::usage="returns true if parameter is a matrix";
+IsSymmetricMatrixParameter::usage="returns true if parameter is a matrix";
 
 SetInputParameters::usage="";
 SetModelParameters::usage="";
@@ -49,7 +51,7 @@ expression.";
 
 FillInputParametersFromTuples::usage="";
 
-Begin["Private`"];
+Begin["`Private`"];
 
 allInputParameters = {};
 allModelParameters = {};
@@ -69,6 +71,17 @@ AddRealParameter[parameter_List] :=
 
 AddRealParameter[parameter_] :=
     additionalRealParameters = DeleteDuplicates[Join[additionalRealParameters, {parameter}]];
+
+IsMatrix[sym_[i1,i2]] := IsMatrix[sym];
+
+IsMatrix[sym_] :=
+    Length[SARAH`getDimParameters[sym]] === 2;
+
+IsSymmetricMatrixParameter[sym_[i1,i2]] :=
+    IsSymmetricMatrixParameter[sym];
+
+IsSymmetricMatrixParameter[sym_] :=
+    IsMatrix[sym] && MemberQ[SARAH`ListSoftBreakingScalarMasses, sym];
 
 IsRealParameter[sym_] :=
     MemberQ[Join[SARAH`realVar, additionalRealParameters], sym];
