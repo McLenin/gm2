@@ -16,15 +16,15 @@
 // <http://www.gnu.org/licenses/>.
 // ====================================================================
 
-#ifndef SMSSM_PARAMETER_POINT_H
-#define SMSSM_PARAMETER_POINT_H
+#ifndef SNMSSM_PARAMETER_POINT_H
+#define SNMSSM_PARAMETER_POINT_H
 
 #include "linalg.h"
 
 namespace flexiblesusy {
 
-struct Mssm_parameter_point {
-   Mssm_parameter_point()
+struct SNmssm_parameter_point {
+   SNmssm_parameter_point()
       : m0(125.0)
       , m12(500.0)
       , a0(0.0)
@@ -32,6 +32,11 @@ struct Mssm_parameter_point {
       , msGuess(1000.)
       , signMu(1)
       , tanBeta(10.0)
+      , lambda(0.1)
+      , kappa(0.)
+      , svev(1000.)
+      , xiF(0.)
+      , muPrime(0.)
    {}
    DoubleVector get_soft_pars() const {
       DoubleVector highScaleSoftPars(3);
@@ -40,19 +45,34 @@ struct Mssm_parameter_point {
       highScaleSoftPars(3) = a0;
       return highScaleSoftPars;
    }
-   friend std::ostream& operator<<(std::ostream& os, const Mssm_parameter_point& pp) {
-      os << "CMSSM parameter point:"
+   DoubleVector get_nmpars() const {
+      DoubleVector nmpars(5);
+      nmpars(1) = lambda;
+      nmpars(2) = kappa;
+      nmpars(3) = svev;
+      nmpars(4) = xiF;
+      nmpars(5) = muPrime;
+      return nmpars;
+   }
+   friend std::ostream& operator<<(std::ostream& os, const SNmssm_parameter_point& pp) {
+      os << "CNMSSM parameter point:"
          << " m0=" << pp.m0
          << ", m12=" << pp.m12
          << ", a0=" << pp.a0
          << ", mxGuess=" << pp.mxGuess
          << ", signMu=" << pp.signMu
          << ", tanBeta=" << pp.tanBeta
+         << ", lambda=" << pp.lambda
+         << ", kappa=" << pp.kappa
+         << ", svev=" << pp.svev
+         << ", xiF=" << pp.xiF
+         << ", muPrime=" << pp.muPrime
          << '\n';
       return os;
    }
 
    double m0, m12, a0, mxGuess, msGuess, signMu, tanBeta;
+   double lambda, kappa, svev, xiF, muPrime;
 };
 
 }
