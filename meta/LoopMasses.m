@@ -3,9 +3,9 @@ BeginPackage["LoopMasses`", {"SARAH`", "TextFormatting`",
                              "CConversion`", "TreeMasses`",
                              "SelfEnergies`", "TwoLoop`", "Parameters`"}];
 
-CreateLoopMassFunctions::usage="";
-CreateLoopMassPrototypes::usage="";
-CallAllLoopMassFunctions::usage="";
+CreateOneLoopPoleMassFunctions::usage="";
+CreateOneLoopPoleMassPrototypes::usage="";
+CallAllOneLoopPoleMassFunctions::usage="";
 CreateRunningDRbarMassPrototypes::usage="";
 CreateRunningDRbarMassFunctions::usage="";
 
@@ -13,7 +13,7 @@ GetLoopCorrectedParticles::usage="Returns list of all particles that
 get loop corrected masses.  These are all particles, except for
 ghosts.";
 
-Begin["Private`"];
+Begin["`Private`"];
 
 GetLoopCorrectedParticles[states_] :=
     Module[{particles},
@@ -470,7 +470,7 @@ CreateLoopMassFunction[particle_Symbol, precision_Symbol, tadpole_] :=
            Return[result];
           ];
 
-CreateLoopMassFunctions[precision_List, oneLoopTadpoles_List, vevs_List] :=
+CreateOneLoopPoleMassFunctions[precision_List, oneLoopTadpoles_List, vevs_List] :=
     Module[{result = "", particle, prec, i = 1, f, d, tadpole, fieldsAndVevs = {}},
            (* create list that associates fields at vevs *)
            For[f = 1, f <= Length[oneLoopTadpoles], f++,
@@ -491,7 +491,7 @@ CreateLoopMassFunctions[precision_List, oneLoopTadpoles_List, vevs_List] :=
 CreateLoopMassPrototype[particle_Symbol] :=
     "void calculate_" <> ToValidCSymbolString[FlexibleSUSY`M[particle]] <> "_pole_1loop();\n";
 
-CreateLoopMassPrototypes[states_:FlexibleSUSY`FSEigenstates] :=
+CreateOneLoopPoleMassPrototypes[states_:FlexibleSUSY`FSEigenstates] :=
     Module[{particles, result = ""},
            particles = GetLoopCorrectedParticles[states];
            (result = result <> CreateLoopMassPrototype[#])& /@ particles;
@@ -501,18 +501,44 @@ CreateLoopMassPrototypes[states_:FlexibleSUSY`FSEigenstates] :=
 CallLoopMassFunction[particle_Symbol] :=
     "calculate_" <> ToValidCSymbolString[FlexibleSUSY`M[particle]] <> "_pole_1loop();\n";
 
-CallAllLoopMassFunctions[states_:FlexibleSUSY`FSEigenstates] :=
+CallThreadedLoopMassFunction[particle_Symbol] :=
+    Module[{massStr},
+           massStr = ToValidCSymbolString[FlexibleSUSY`M[particle]];
+           "std::thread thread_" <> massStr <> "(Thread(this, &CLASSNAME::calculate_" <>
+           massStr <> "_pole_1loop));\n"
+          ];
+
+JoinLoopMassFunctionThread[particle_Symbol] :=
+    "thread_" <> ToValidCSymbolString[FlexibleSUSY`M[particle]] <> ".join();\n";
+
+CallAllOneLoopPoleMassFunctions[states_, enablePoleMassThreads_:False] :=
     Module[{particles, susyParticles, smParticles, callSusy = "",
-            callSM = "", result},
+            callSM = "", result, joinSmThreads = "", joinSusyThreads = ""},
            particles = GetLoopCorrectedParticles[states];
            susyParticles = Select[particles, (!SARAH`SMQ[#])&];
            smParticles = Complement[particles, susyParticles];
-           (callSusy = callSusy <> CallLoopMassFunction[#])& /@ susyParticles;
-           (callSM   = callSM   <> CallLoopMassFunction[#])& /@ smParticles;
-           result = callSusy <> "\n" <>
-                    "if (calculate_sm_pole_masses) {\n" <>
-                    IndentText[callSM] <>
-                    "}\n";
+           If[enablePoleMassThreads =!= True,
+              (callSusy = callSusy <> CallLoopMassFunction[#])& /@ susyParticles;
+              (callSM   = callSM   <> CallLoopMassFunction[#])& /@ smParticles;
+              result = callSusy <> "\n" <>
+                       "if (calculate_sm_pole_masses) {\n" <>
+                       IndentText[callSM] <>
+                       "}\n";
+              ,
+              (callSusy = callSusy <> CallThreadedLoopMassFunction[#])& /@ susyParticles;
+              (callSM   = callSM   <> CallThreadedLoopMassFunction[#])& /@ smParticles;
+              (joinSmThreads   = joinSmThreads   <> JoinLoopMassFunctionThread[#])& /@ smParticles;
+              (joinSusyThreads = joinSusyThreads <> JoinLoopMassFunctionThread[#])& /@ susyParticles;
+              result = "thread_exception = nullptr;\n\n" <> callSusy <> "\n" <>
+                       "if (calculate_sm_pole_masses) {\n" <>
+                       IndentText[callSM] <>
+                       IndentText[joinSmThreads] <>
+                       "}\n\n" <>
+                       joinSusyThreads <> "\n" <>
+                       "if (thread_exception != nullptr)\n" <>
+                       IndentText["std::rethrow_exception(thread_exception);"] <>
+                       "\n";
+             ];
            Return[result];
           ];
 

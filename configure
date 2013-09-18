@@ -12,6 +12,10 @@ BASEDIR=$(dirname $0)
 # absolute path to this script
 ABSBASEDIR=$(cd $BASEDIR; pwd)
 
+# platform information
+linuxdist=""
+debmultiarch=""
+
 # default library directories
 default_lib_paths="/usr/lib /usr/local/lib"
 default_inc_paths="/usr/include /usr/local/include"
@@ -146,7 +150,7 @@ contains() {
 }
 
 contains_not() {
-    # Check if string $1 contains $2
+    # Check if string $1 does not contain $2
     if test $# -lt 2 ; then
         echo "contains: Too few arguments"
         return 1
@@ -207,6 +211,13 @@ check_library() {
 	for p in ${libdirs}; do
             libdir32=`echo "$p" | grep lib | sed -e 's|lib$|lib32|g' -e 's|lib/|lib32/|g'`
             libdirs="$libdirs $libdir32"
+	done
+    fi
+    # look first in the DEB_HOST_MULTIARCH directories
+    if test "x$debmultiarch" != "x" ; then
+	for p in ${libdirs}; do
+            multiarch_libdir=`echo "$p" | sed "s|lib$|lib/$debmultiarch|"`
+            libdirs="$multiarch_libdir $libdirs"
 	done
     fi
 
@@ -512,6 +523,15 @@ check_models() {
                 fi ;;
         esac
     done
+
+    # test model dependencies (snmssm depends on smssm)
+    if contains "${MODELS}" "models/snmssm"; then
+        if contains_not "${MODELS}" "models/smssm"; then
+            message "Error: model snmssm requires model smssm"
+            message "Please also select the smssm"
+            exit 1
+        fi
+    fi
 }
 
 #_____________________________________________________________________
@@ -537,6 +557,33 @@ check_addons() {
                 fi ;;
         esac
     done
+}
+
+#_____________________________________________________________________
+check_platform() {
+    # checks which platform we have
+    linuxdist=""
+    debmultiarch=""
+
+    exists_in_path "lsb_release"
+    if [ -n "$cmd" ] ; then
+        if lsb_release -d | grep -i 'ubuntu\|debian\|mint' > /dev/null 2>& 1; then
+            linuxdist="multiarch"
+        fi
+    fi
+
+    if test "x$linuxdist" = "xmultiarch"; then
+        if `which dpkg-architecture > /dev/null 2>&1` ; then
+            if `dpkg-architecture -qDEB_HOST_MULTIARCH > /dev/null 2>&1` ; then
+                checking_msg "dpkg-architecture"
+                debmultiarch=`dpkg-architecture -qDEB_HOST_MULTIARCH 2> /dev/null`
+                result "$debmultiarch"
+            fi
+        else
+            result "`basename $0`: dpkg-architecture MUST be installed"
+            exit 1
+        fi
+    fi
 }
 
 #_____________________________________________________________________
@@ -576,19 +623,40 @@ check_boost_test_incl() {
 check_boost_thread_libs() {
     check_library "libboost_thread libboost_thread-mt" \
 	"$boost_lib_dir" "$default_lib_paths"
-    if test "x$found_lib" = "x" ; then
+    if [ -z "$found_lib" ]; then
         message "Error: libboost_thread or libboost_thread-mt must be installed"
         message "  to enable multithreading in the lattice method, see http://www.boost.org"
         message "  You can disable the lattice method with the --with-algorithms= flag."
         exit 1
+    fi
+    BOOSTTHREADLIBS_=-l$(echo -n "$found_lib" | sed 's/^lib\(.*\)\..*$/\1/')
+
+    check_library "libboost_system libboost_system-mt" \
+	"$boost_lib_dir" "$default_lib_paths"
+    if [ -z "$found_lib" ]; then
+        message "Error: libboost_system or libboost_system-mt must be installed"
+        message "  to enable multithreading in the lattice method, see http://www.boost.org"
+        message "  You can disable the lattice method with the --with-algorithms= flag."
+        exit 1
+    fi
+    BOOSTTHREADLIBS_="$BOOSTTHREADLIBS_ "-l$(
+	echo -n "$found_lib" | sed 's/^lib\(.*\)\..*$/\1/')
+
+    check_library "libpthread" "" "$default_lib_paths"
+    if [ -z "$found_lib" ]; then
+        message "Error: libpthread must be installed to enable multithreading"
+        message "  in the lattice method.  You can disable the lattice method"
+        message "  with the --with-algorithms= flag."
+        exit 1
+    fi
+    BOOSTTHREADLIBS_="$BOOSTTHREADLIBS_ "-l$(
+        echo -n "$found_lib" | sed 's/^lib\(.*\)\..*$/\1/')
+
+    if [ -z "$boost_lib_dir" ]; then
+        # assume that the linker will look in the default paths
+        BOOSTTHREADLIBS="$BOOSTTHREADLIBS_"
     else
-        BOOSTTHREADLIBS_=-l$(echo -n "$found_lib" | sed 's/^lib\(.*\)\..*$/\1/')
-        if [ -z "$boost_lib_dir" ]; then
-            # assume that the linker will look in the default paths
-            BOOSTTHREADLIBS="$BOOSTTHREADLIBS_"
-        else
-            BOOSTTHREADLIBS="-L$boost_lib_dir $BOOSTTHREADLIBS_"
-        fi
+        BOOSTTHREADLIBS="-L$boost_lib_dir $BOOSTTHREADLIBS_"
     fi
 }
 
@@ -790,7 +858,7 @@ check_makelib() {
     if test "x$enable_static_libs" = "xno" ; then
         if test "x$makelib_cmd" = "xar" ; then
             message "\n   Error: $makelib_cmd cannot be used to create shared libraries!"
-            message "   Please use --make-lib-cmd=\"gcc -shared -o\" or something similar."
+            message "   Please use --with-make-lib-cmd=\"gcc -shared -o\" or something similar."
             exit 1
         fi
     fi
@@ -865,7 +933,7 @@ enable_defines() {
         if test "x$LIBEXT" = "x.a" ; then
             message "  Warning: library extension $LIBEXT is reserved for static libraries."
             message "    Please consider using .so as library extension, or similar, e.g."
-            message "    --libext=\".so\""
+            message "    --with-lib-ext=\".so\""
         fi
     fi
 
@@ -886,42 +954,42 @@ Usage: ./`basename $0` [options]
 Options:
 
   --help,-h         Print this help message
-  --libext          Library extension (default: $LIBEXT)
-  --make-lib-cmd    Command to make library (default: $MAKELIB)
   --version,-v      Print version information
 
 enable/disable options, prefix with either --enable- or --disable-
 
-  colors            Colored output
-  debug             Debug messages and assertions
-  looptools         Use LoopTools to compute the loop functions
-  silent            Suppress all command line output
+  colors            Colored output (default: $enable_colors)
+  debug             Debug messages and assertions (no default)
+  looptools         Use LoopTools to compute the loop functions (default: $enable_looptools)
+  silent            Suppress all command line output (default: $enable_silent)
   static-libs       Create static libraries (default: $enable_static_libs)
-  verbose           Verbose messages
+  verbose           Verbose messages (default: $enable_verbose)
 
-with options, prefix with --with-, enables corresponding support
+Package directories, compilation settings and model selection
 
-  addons            Comma separated list of addons to be build
-                    (default: $ADDONS)
-                    possible values: all none <addon1>,<addon2>,...
-  algorithms        Comma separated list of RG solver algorithms
-                    (default: $ALGORITHMS)
-                    possible values: all $available_algorithms
-  boost-libdir      Path to search for BOOST libraries
-  boost-incdir      Path to search for BOOST headers
-  eigen-incdir      Path to search for Eigen headers
-  cxx               C++ compiler (default: $CXX)
-  cxxflags          C++ compiler flags (default: $CXXFLAGS)
-  fc                Fortran compiler (default: $FC)
-  fflags            Fortran compiler flags (default: $FFLAGS)
-  gsl-config        Path to gsl-config (default: $gsl_config)
-  lapack-libdir     Path to search for LAPACK and BLAS libraries
-  looptools-libdir  Path to search for LoopTools libraries
-  looptools-incdir  Path to search for LoopTools headers
-  math-cmd          Mathematic kernel (default: $MATH)
-  models            Comma separated list of models to be build
-                    (default: $MODELS)
-                    possible values: all <model1>,<model2>,...
+  --with-addons=            Comma separated list of addons to be build
+                            (default: $ADDONS)
+                            possible values: all none <addon1>,<addon2>,...
+  --with-algorithms=        Comma separated list of RG solver algorithms
+                            (default: $ALGORITHMS)
+                            possible values: all $available_algorithms
+  --with-boost-libdir=      Path to search for BOOST libraries
+  --with-boost-incdir=      Path to search for BOOST headers
+  --with-cxx=               C++ compiler (default: $CXX)
+  --with-cxxflags=          C++ compiler flags (default: $CXXFLAGS)
+  --with-eigen-incdir=      Path to search for Eigen headers
+  --with-fc=                Fortran compiler (default: $FC)
+  --with-fflags=            Fortran compiler flags (default: $FFLAGS)
+  --with-gsl-config=        Path to gsl-config (default: $gsl_config)
+  --with-lapack-libdir=     Path to search for LAPACK and BLAS libraries
+  --with-lib-ext=           Library extension (default: $LIBEXT)
+  --with-looptools-libdir=  Path to search for LoopTools libraries
+  --with-looptools-incdir=  Path to search for LoopTools headers
+  --with-make-lib-cmd       Command to make library (default: $MAKELIB)
+  --with-math-cmd=          Mathematic kernel (default: $MATH)
+  --with-models=            Comma separated list of models to be build
+                            (default: $MODELS)
+                            possible values: all <model1>,<model2>,...
 EOF
 }
 
@@ -998,13 +1066,13 @@ if test $# -gt 0 ; then
             --with-fflags=*)         FFLAGS=$optarg ;;
             --with-gsl-config=*)     gsl_config=$optarg ;;
             --with-lapack-libdir=*)  lapack_lib_dir=$optarg ;;
+            --with-lib-ext=*)        LIBEXT=$optarg ;;
             --with-looptools-libdir=*) looptools_lib_dir=$optarg ;;
             --with-looptools-incdir=*) looptools_inc_dir=$optarg ;;
+            --with-make-lib-cmd=*)   MAKELIB=$optarg ;;
             --with-math-cmd=*)       MATH=$optarg ;;
             --with-models=*)         MODELS=$optarg ;;
             --help|-h)               help; exit 0 ;;
-            --libext=*)              LIBEXT=$optarg ;;
-            --make-lib-cmd=*)        MAKELIB=$optarg ;;
             --version|-v)            version; exit 0 ;;
             *)  echo "Invalid option '$1'. Try $0 --help" ; exit 1 ;;
         esac
@@ -1013,6 +1081,7 @@ if test $# -gt 0 ; then
 fi
 
 guess_machine_word_size
+check_platform
 
 check_algorithms
 check_boost_test_incl

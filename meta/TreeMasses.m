@@ -60,6 +60,8 @@ GetGoldstoneBosons::usage="returns list of all goldstone bosons";
 GetSMGoldstoneBosons::usage="returns list of all Standard Model
 goldstone bosons";
 
+GetVectorBosons::usage="returns list of all vector bosons";
+
 GetDimension::usage="returns the size of the particle multiplet";
 
 GetDimensionStartSkippingGoldstones::usage="return first index,
@@ -77,6 +79,8 @@ matrix";
 
 GetMixingMatrixSymbol::usage="get mixing matrix symbol from mass
 matrix";
+
+GetMassOfUnmixedParticle::usage="returns mass of unmixed particle";
 
 ReplaceDependencies::usage="returs expression with dependencies
 (ThetaW etc.) replaced by the user-defined expressions (";
@@ -103,11 +107,12 @@ IsDiracFermion::usage="";
 IsComplexScalar::usage="";
 IsRealScalar::usage="";
 IsMassless::usage="";
+IsUnmixed::usage="";
 
 StripGenerators::usage="removes all generators Lam, Sig, fSU2, fSU3
 and removes Delta with the given indices";
 
-Begin["Private`"];
+Begin["`Private`"];
 
 unrotatedParticles = {};
 
@@ -471,21 +476,22 @@ CallMassCalculationFunction[massMatrix_TreeMasses`FSMassMatrix] :=
            Return[result];
           ];
 
-(* These rules are needed to check if a matrix is hermitian *)
-SARAH`sum /: Susyno`LieGroups`conj[SARAH`sum[ind_,a_,b_,expr_]] := SARAH`sum[ind,a,b,Susyno`LieGroups`conj[expr]];
-
-Susyno`LieGroups`conj[m_[a_,b_]] := m[b,a] /; MemberQ[SARAH`ListSoftBreakingScalarMasses, m];
-
 IsSymmetric[matrix_List] := IsHermitian[matrix, Identity];
 
 IsHermitian[matrix_List, op_:Susyno`LieGroups`conj] :=
-    Module[{rows, cols, i, k},
+    Module[{rows, cols, i, k, difference},
            rows = Length[matrix];
            For[i = 1, i <= rows, i++,
                cols = Length[matrix[[i]]];
                If[rows =!= cols, Return[False];];
-               For[k = 1, k < i, k++,
-                   If[matrix[[i,k]] =!= op[matrix[[k,i]]], Return[False];];
+               For[k = 1, k <= i, k++,
+                   difference = matrix[[i,k]] - op[matrix[[k,i]]] //. {
+                       Susyno`LieGroups`conj[SARAH`sum[ind_,a_,b_,expr_]] :>
+                           SARAH`sum[ind,a,b,Susyno`LieGroups`conj[expr]],
+                       Susyno`LieGroups`conj[m_[a_,b_]] :>
+                           m[b,a] /; MemberQ[SARAH`ListSoftBreakingScalarMasses, m]
+                   };
+                   If[!PossibleZeroQ[difference], Return[False];];
                   ];
               ];
            Return[True];

@@ -3,12 +3,12 @@ Needs["CConversion`", "CConversion.m"];
 
 Print["testing ConvertGreekLetters[] ..."];
 
-TestEquality[Private`ConvertGreekLetters[\[Alpha]], Alpha];
-TestEquality[Private`ConvertGreekLetters[\[Beta]], Betax]; (* Beta is already defined by Mathematica *)
-TestEquality[Private`ConvertGreekLetters[\[Mu]]   , Mu];
-TestEquality[Private`ConvertGreekLetters[\[Zeta]], Zetax]; (* Zeta is already defined by Mathematica *)
+TestEquality[CConversion`Private`ConvertGreekLetters[\[Alpha]], Alpha];
+TestEquality[CConversion`Private`ConvertGreekLetters[\[Beta]], Betax]; (* Beta is already defined by Mathematica *)
+TestEquality[CConversion`Private`ConvertGreekLetters[\[Mu]]   , Mu];
+TestEquality[CConversion`Private`ConvertGreekLetters[\[Zeta]], Zetax]; (* Zeta is already defined by Mathematica *)
 SARAH`Delta;
-TestEquality[Private`ConvertGreekLetters[\[Delta]], Deltax];
+TestEquality[CConversion`Private`ConvertGreekLetters[\[Delta]], Deltax];
 
 Print["testing ToValidCSymbol[] ..."];
 
@@ -76,6 +76,14 @@ TestEquality[RValueToCFormString[trace[A Adj[A]]], "(A*A.adjoint()).trace()"];
 TestEquality[RValueToCFormString[a[i1,i2]], "a"];
 TestEquality[RValueToCFormString[a[b][i1,i2]], "a(b)"];
 TestEquality[RValueToCFormString[a[b,c][i1,i2]], "a(b,c)"];
+
+(* test greek symbol conversion *)
+TestEquality[RValueToCFormString[\[Mu]], "Mu"];
+TestEquality[RValueToCFormString[SARAH`B[\[Mu]]], "BMu"];
+TestEquality[RValueToCFormString[A[\[Mu]]], "A(Mu)"];
+TestEquality[RValueToCFormString[\[Mu][1]], "Mu(1)"];
+TestEquality[RValueToCFormString[\[Mu][1,2]], "Mu(1,2)"];
+TestEquality[RValueToCFormString[\[Mu][1,2,3]], "Mu(1,2,3)"];
 
 Print["testing GetHead[] ..."];
 

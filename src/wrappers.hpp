@@ -135,6 +135,16 @@ inline DoubleMatrix Re(const ComplexMatrix& m)
    return m.real();
 }
 
+inline double Im(double x)
+{
+   return x;
+}
+
+inline double Im(const Complex& x)
+{
+   return std::imag(x);
+}
+
 inline double Sqrt(double a)
 {
    return std::sqrt(a);
@@ -147,6 +157,17 @@ T Sqr(T a)
 }
 
 void Symmetrize(DoubleMatrix&);
+
+template <typename Derived>
+void Symmetrize(Eigen::MatrixBase<Derived>& m)
+{
+   static_assert(m.RowsAtCompileTime == m.ColsAtCompileTime,
+                 "Symmetrize is only defined for squared matrices");
+
+   for (int i = 0; i < m.RowsAtCompileTime; i++)
+      for (int k = 0; k < i; k++)
+         m(i,k) = m(k,i);
+}
 
 Eigen::ArrayXd ToEigenArray(const DoubleVector&);
 Eigen::ArrayXd ToEigenArray(double);

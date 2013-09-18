@@ -13,7 +13,7 @@ TEMPLATES    := \
 		$(DIR)/physical.hpp.in \
 		$(DIR)/physical.cpp.in \
 		$(DIR)/run.cpp.in \
-		$(DIR)/run_low_scale_model.cpp.in \
+		$(DIR)/scan.cpp.in \
 		$(DIR)/slha_io.hpp.in \
 		$(DIR)/slha_io.cpp.in \
 		$(DIR)/susy_scale_constraint.hpp.in \
@@ -31,6 +31,8 @@ TEMPLATES    := \
 		$(DIR)/lattice_model.cpp.in \
 		$(DIR)/lattice_susy_scale_constraint.hpp.in \
 		$(DIR)/lattice_susy_scale_constraint.cpp.in \
+		$(DIR)/spectrum_generator.hpp.in \
+		$(DIR)/low_scale_spectrum_generator.hpp.in \
 		$(DIR)/two_scale_convergence_tester.hpp.in \
 		$(DIR)/two_scale_convergence_tester.cpp.in \
 		$(DIR)/two_scale_high_scale_constraint.hpp.in \

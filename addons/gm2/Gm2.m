@@ -14,7 +14,7 @@ Print["G-2 addon version 0.0 for FlexibleSUSY ",
 Print["*****************************************************"];
 Print[""];
 
-Begin["Private`"];
+Begin["`Private`"];
 
 CalculateGm2OneLoop[] :=
     Module[{result},

@@ -160,7 +160,6 @@ public:
            return false;
      return true;
   }
-  bool testNan() const; ///< test for Nan elements
 };
 
 
@@ -328,7 +327,6 @@ public:
   /// resize matrix (Warning: can be slow because it internally copys a std::valarray<double>)
   void resize(int, int);
 
-  bool testNan() const; ///< test for Nan elements
   double trace() const;///< trace must only be performed on a square matrix
   DoubleMatrix transpose() const; ///< can be any size
   DoubleVector flatten() const; ///< matrix to vector, row by row
@@ -418,6 +416,14 @@ DoubleMatrix rot2d(double theta);
 // [ -sin(theta)  cos(theta) ]
 // [  cos(theta)  sin(theta) ] --
 DoubleMatrix rot2dTwist(double theta);
+
+/// LCT: Returns a 3x3 orthogonal matrix of rotation by angle theta.
+/// Used in rotating CP-odd Higgs matrix
+// [ -cos theta  sin theta  0 ]
+// [ sin theta   cos theta  0 ]
+// [ 0           0          1 ]
+DoubleMatrix rot3d(double theta);
+
 /// Redefines mixing matrices to be complex such that diagonal values are
 /// positive for a 2 by 2: 
 // [ cos thetaL    sin thetaL ]   A   [ cos thetaR -sin thetaR ]  = diag
