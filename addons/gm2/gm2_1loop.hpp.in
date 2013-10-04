@@ -26,8 +26,19 @@
 #include "@ModelName@_two_scale_model.hpp"
 
 
+class DoubleVector;
+class DoubleMatrix;
+
 namespace flexiblesusy {
+
+template <class T> class MSSM;
+class Two_scale;
+
 namespace gm2 {
+
+/// Fills 2x2 SMuon mixing matrix and mass vector
+void FillSMuonMixingMatrix(const MSSM<Two_scale>&, DoubleVector&,
+                           DoubleMatrix&);
 
 /**
  * Calculates g-2 at the one-loop level

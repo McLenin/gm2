@@ -19,6 +19,10 @@
 // File generated at @DateAndTime@
 
 #include "gm2_1loop.hpp"
+#include "linalg.h"
+#include "logger.hpp"
+#include "wrappers.hpp"
+#include "@ModelName@_two_scale_model.hpp"
 
 namespace flexiblesusy {
 namespace gm2 {
@@ -119,6 +123,38 @@ double calculate_gm2_1loop(const @ModelName@<Two_scale>& model) {
                       + alpha_mu_cha(model) ); //@gm2_1l@;
 
    return gm2;
+}
+
+/**
+ * Fills 2x2 smuon mixing matrix and mass vector.
+ *
+ * @param model model parameter class
+ * @param m smuon mass vector (size 2)
+ * @param u smuon mixing matrix (size 2x2)
+ */
+void FillSMuonMixingMatrix(const MSSM<Two_scale>& model, DoubleVector& m,
+                           DoubleMatrix& u)
+{
+   if (m.size() != 2)
+      FATAL("Mass vector must have size 2");
+   if (u.displayRows() != 2 || u.displayCols() != 2)
+      FATAL("Mixing matrix must be of the form 2x2");
+
+   const DoubleMatrix mass_matrix_6x6(model.get_mass_matrix_Se());
+
+   DoubleMatrix mass_matrix_2x2(2,2);
+   mass_matrix_2x2(1,1) = mass_matrix_6x6(2,2);
+   mass_matrix_2x2(1,2) = mass_matrix_6x6(2,5);
+   mass_matrix_2x2(2,1) = mass_matrix_6x6(5,2);
+   mass_matrix_2x2(2,2) = mass_matrix_6x6(5,5);
+
+   Diagonalize2by2(mass_matrix_2x2, u, m);
+
+   int min_element;
+   if (m.min(min_element) < 0.)
+      ERROR("SMuon is a Tachyon");
+
+   m = AbsSqrt(m);
 }
 
 } // namespace gm2

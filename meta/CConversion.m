@@ -267,7 +267,7 @@ ToValidCSymbol[symbol_Integer] := symbol;
 
 ToValidCSymbol[symbol_Real] := symbol;
 
-ToValidCSymbol[symbol_[i1,i2]] := ToValidCSymbol[symbol];
+ToValidCSymbol[symbol_[Susyno`LieGroups`i1,SARAH`i2]] := ToValidCSymbol[symbol];
 
 ToValidCSymbol[symbol_ /; Length[symbol] > 0] :=
     Module[{result = "", i},
@@ -362,7 +362,7 @@ RValueToCFormString[expr_] :=
                     Susyno`LieGroups`conj    -> SARAH`Conj //. {
                     Times[x___, SARAH`Conj[a_], y___, a_, z___] :> AbsSqr[a] x y z,
                     Times[x___, a_, y___, SARAH`Conj[a_], z___] :> AbsSqr[a] x y z } /.
-                    a_[SARAH`i1,SARAH`i2]    :> a /.
+                    a_[Susyno`LieGroups`i1, SARAH`i2] :> a /.
                     SARAH`Delta[a_,a_]       -> 1 /.
                     Power[a_?NumericQ,n_?NumericQ] :> N[Power[a,n]] /.
                     Sqrt[a_?NumericQ]        :> N[Sqrt[a]] /.
@@ -371,7 +371,8 @@ RValueToCFormString[expr_] :=
                     Power[a_,-0.5]           :> 1/Sqrt[a] /.
                     Power[a_,2]              :> Global`Sqr[a] /.
                     Power[a_,-2]             :> 1/Global`Sqr[a] /.
-                    Power[E,a_]              :> exp[a];
+                    Power[E,a_]              :> exp[a] /.
+                    Sqrt[x_]/Sqrt[y_]        :> Sqrt[x/y];
            result = Apply[Function[code, Hold[CForm[code]], HoldAll],
                           Hold[#] &[result /. { SARAH`MatMul[a__] :> times @@ SARAH`MatMul[a],
                                                 SARAH`trace[a__]  :> SARAH`trace[times[a]] }]

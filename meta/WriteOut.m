@@ -41,7 +41,7 @@ PrintParameter[Null, streamName_String] := "";
 
 PrintParameter[parameter_, streamName_String] :=
     Module[{parameterName},
-           parameterName = CConversion`ToValidCSymbolString[parameter /. a_[i1,i2] :> a];
+           parameterName = CConversion`ToValidCSymbolString[parameter /. a_[Susyno`LieGroups`i1,SARAH`i2] :> a];
            Return[streamName <> " << \"" <> parameterName <> " = \" << " <>
                   parameterName <> " << '\\n';\n"];
           ];
@@ -166,7 +166,7 @@ SortBlocks[modelParameters_List] :=
           ];
 
 WriteSLHABlock[{blockName_, tuples_List}] :=
-    Module[{result = "", blockNameStr, t, pdg, parmStr, scale},
+    Module[{result = "", blockNameStr, t, pdg, par, parStr, parVal, scale},
            blockNameStr = ToString[blockName];
            scale = "model.get_scale()";
            result = "std::ostringstream block;\n" <>
@@ -179,10 +179,18 @@ WriteSLHABlock[{blockName_, tuples_List}] :=
                   Print["  Tuples list: ", tuples];
                   Continue[];
                  ];
-               parmStr = CConversion`ToValidCSymbolString[tuples[[t,1]]];
+               par = tuples[[t,1]];
+               parStr = CConversion`ToValidCSymbolString[par];
+               parVal = "MODELPARAMETER(" <> parStr <> ")";
+               (* print unnormalized hypercharge gauge coupling *)
+               If[par === SARAH`hyperchargeCoupling,
+                  parVal = "(" <> parVal <> " * " <>
+                           CConversion`RValueToCFormString[
+                               Parameters`GetGUTNormalization[par]] <> ")";
+                 ];
                pdg = ToString[tuples[[t,2]]];
                result = result <> "      << FORMAT_ELEMENT(" <> pdg <> ", " <>
-                        "MODELPARAMETER(" <> parmStr <> "), \"" <> parmStr <> "\")" <>
+                        parVal <> ", \"" <> parStr <> "\")" <>
                         If[t == Length[tuples], ";", ""] <> "\n";
               ];
            result = result <> "slha_io.set_block(block);\n";
