@@ -21,6 +21,7 @@
 #include "logger.hpp"
 #include "gm2_1loop.hpp"
 #include "@ModelName@_two_scale_model.hpp"
+#include "wrappers.hpp"
 
 using namespace flexiblesusy;
 
@@ -77,11 +78,11 @@ void setup(@ModelName@<Two_scale>& model)
    vu = 242.968;
 
    // soft parameters
-   TYu << -0.0144387,        0,        0,
+   TYu << -0.0144387,        0,        0, //f^uA^u
                    0, -7.64037,        0,
                    0,        0, -759.305;
 
-   TYd << -0.336207,        0,        0,
+   TYd << -0.336207,        0,        0, // analog
                   0, -7.36109,        0,
                   0,        0, -250.124;
 
@@ -91,16 +92,16 @@ void setup(@ModelName@<Two_scale>& model)
 
    BMu = 52140.8;
 
-   mq2 << 1.03883e+06,           0,           0,
+   mq2 << 1.03883e+06,           0,           0,//Massenterme squarks M_q^2
                     0, 1.03881e+06,           0,
                     0,           0,      879135;
 
-   ml2 << 124856,      0,      0,
+   ml2 << 124856,      0,      0,//analog
                0, 124853,      0,
                0,      0, 124142;
 
-   mHd2 = 92436.9;
-   mHu2 = -380337;
+   mHd2 = 92436.9; // massenterme higgse m_1^2
+   mHu2 = -380337; // m_2^2
 
    md2 << 954454,      0,      0,
                0, 954439,      0,
@@ -114,9 +115,9 @@ void setup(@ModelName@<Two_scale>& model)
                 0, 49210.9,       0,
                 0,       0, 47759.2;
 
-   MassB = 210.328;
-   MassWB = 389.189;
-   MassG = 1114.45;
+   MassB = 210.328; //massenterme superpartner eichbosonen, M_1
+   MassWB = 389.189;// M_2
+   MassG = 1114.45;// M_3
 
    // set parameters
    model.set_Yu(Yu);
@@ -153,6 +154,9 @@ int main()
    setup(model);
 
    const double gm2_1l = gm2::calculate_gm2_1loop(model);
+
+   INFO("alpha_chi = " << gm2::alpha_mu_chi(model));
+   INFO("alpha_cha = " << gm2::alpha_mu_cha(model));
    INFO("g-2 (1-loop) = " << gm2_1l);
 
    return 0;

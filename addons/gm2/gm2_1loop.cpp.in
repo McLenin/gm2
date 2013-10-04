@@ -23,5 +23,103 @@
 namespace flexiblesusy {
 namespace gm2 {
 
+ComplexMatrix n_L(const @ModelName@<Two_scale>& model) {
+   ComplexMatrix n__L(4, 2);
+   for(int i=1; i <=4; i++) {
+      for(int m=1; m <=2; m++) {
+         n__L(i, m) = ( (sqrt(.5) * ( model.get_g1()*model.get_ZN()(i, 1)
+                                    + model.get_g2()*model.get_ZN()(i, 2) )
+                                  * conj(model.get_ZU()(m + 2, 3)) )
+                      - model.get_Ye()(1, 1)*model.get_ZN()(i, 3)
+                                  * conj(model.get_ZU()(m + 2, 4)) );
+      }
+   }
+   return n__L;
+}
+
+
+ComplexMatrix n_R(const @ModelName@<Two_scale>& model) {
+   ComplexMatrix n__R(4, 2);
+   for(int i=1; i <=4; i++) {
+      for(int m=1; m <=2; m++) {
+         n__R(i, m) = ( sqrt(2.) * model.get_g1()*model.get_ZN()(i, 1)*model.get_ZU()(m + 2, 4) 
+                       + model.get_Ye()(1, 1)*model.get_ZN()(i, 3)*model.get_ZU()(m + 2, 3) );
+      }
+   }
+   return n__R;
+}
+
+ComplexVector c_L(const @ModelName@<Two_scale>& model) {
+   ComplexVector c__L(2);
+   for(int k=1; k<=2; k++) {
+      c__L(k) = - model.get_g2() * model.get_UM()(k, 1); // Is UM the right matrix?
+   }
+   return c__L;
+}
+
+ComplexVector c_R(const @ModelName@<Two_scale>& model) {
+   ComplexVector c__R(2);
+   for(int k=1; k<=2; k++) {
+      c__R(k) = model.get_Ye()(1, 1) * model.get_UP()(k, 2); // Is UP the right matrix?
+   }
+
+   return c__R;
+}
+
+DoubleMatrix x_im(const @ModelName@<Two_scale>& model) {
+   DoubleMatrix x__im(4, 2);
+   for(int i=1; i <=4; i++) {
+      for(int m=1; m <=2; m++) {
+         x__im(i, m) = sqr(model.get_MChi()(i) / model.get_MSe()(m + 2));
+      }
+   }
+
+   return x__im;
+}
+
+DoubleVector x_k(const @ModelName@<Two_scale>& model) {
+   DoubleVector x__k(2);
+   for(int k=1; k<=2; k++) {
+      x__k(k) = sqr(model.get_MCha()(k)) / sqr(model.get_MSv()(2));
+   }
+
+   return x__k;
+}
+
+double alpha_mu_chi(const @ModelName@<Two_scale>& model) {
+   double alpha = 0.;
+   for(int i=1; i<=4; i++) {
+      for(int m=1; m<=2; m++) {
+         alpha += (- model.get_MFe()(2) * (sqr(fabs(n_L(model)(i, m))) + sqr(fabs(n_R(model)(i, m)))) 
+                    * F1N(x_im(model)(i, m)) / (12. * sqr(model.get_MSe()(m + 2)))
+                   + model.get_MChi()(i) * real(n_L(model)(i, m) * n_R(model)(i, m))
+                    * F2N(x_im(model)(i, m)) / (3. * sqr(model.get_MSe()(m + 2))) );
+      }
+   }
+
+   return alpha * model.get_MFe()(2) / sqr(4. * Pi); // check the smu-masses!!!
+
+}
+
+double alpha_mu_cha(const @ModelName@<Two_scale>& model) {
+   double alpha = 0.;
+   for(int k=1; k<=2; k++) {
+      alpha += (  model.get_MFe()(2) * ((sqr(fabs(c_L(model)(k)))) + sqr(fabs(c_R(model)(k))))
+                 * F1C(x_k(model)(k)) / (12. * sqr(model.get_MSv()(2)))
+                + model.get_MCha()(k) * real(c_L(model)(k) * c_R(model)(k))
+                 * F2C(x_k(model)(k)) / (3. * sqr(model.get_MSv()(2))) );
+   }
+
+   return alpha * model.get_MFe()(2) / sqr(4. * Pi);
+}
+
+double calculate_gm2_1loop(const @ModelName@<Two_scale>& model) {
+
+   const double gm2 = ( alpha_mu_chi(model)
+                      + alpha_mu_cha(model) ); //@gm2_1l@;
+
+   return gm2;
+}
+
 } // namespace gm2
 } // namespace flexiblesusy

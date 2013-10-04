@@ -22,6 +22,9 @@
 #define GM2_1LOOP_H
 
 #include "ffunctions.hpp"
+#include "wrappers.hpp"
+#include "@ModelName@_two_scale_model.hpp"
+
 
 namespace flexiblesusy {
 namespace gm2 {
@@ -33,13 +36,19 @@ namespace gm2 {
  *
  * @return g-2 at the one-loop level
  */
-template <class ModelClass>
-double calculate_gm2_1loop(const ModelClass& /* model */)
-{
-   const double gm2 = @gm2_1l@;
+ComplexMatrix n_L(const @ModelName@<Two_scale>&);
+ComplexMatrix n_R(const @ModelName@<Two_scale>&);
 
-   return gm2;
-}
+ComplexVector c_L(const @ModelName@<Two_scale>&);
+ComplexVector c_R(const @ModelName@<Two_scale>&);
+
+DoubleMatrix x_im(const @ModelName@<Two_scale>&);
+DoubleVector x_k(const @ModelName@<Two_scale>&);
+
+double alpha_mu_chi(const @ModelName@<Two_scale>&);
+double alpha_mu_cha(const @ModelName@<Two_scale>&);
+
+double calculate_gm2_1loop(const @ModelName@<Two_scale>&);
 
 } // namespace gm2
 } // namespace flexiblesusy
