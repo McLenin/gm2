@@ -104,29 +104,35 @@ double alpha_mu_chi(const @ModelName@<Two_scale>& model) {
    DoubleVector m_smu(2);
    DoubleMatrix u_smu(2, 2);
    FillSMuonMixingMatrix(model, m_smu, u_smu);
+   ComplexMatrix n__L = n_L(model);
+   ComplexMatrix n__R = n_R(model);
+   DoubleMatrix x__im = x_im(model);
    for(int i=1; i<=4; i++) {
       for(int m=1; m<=2; m++) {
-         alpha += (- model.get_MFe()(2) * (sqr(fabs(n_L(model)(i, m))) + sqr(fabs(n_R(model)(i, m)))) 
-                    * F1N(x_im(model)(i, m)) / (12. * sqr(m_smu(m)))
-                   + model.get_MChi()(i) * real(n_L(model)(i, m) * n_R(model)(i, m))
-                    * F2N(x_im(model)(i, m)) / (3. * sqr(m_smu(m))) );
+         alpha += (- model.get_MFe()(2) * (sqr(fabs(n__L(i, m))) + sqr(fabs(n__R(i, m)))) 
+                    * F1N(x__im(i, m)) / (12. * sqr(m_smu(m)))
+                   + model.get_MChi()(i) * real(n__L(i, m) * n__R(i, m))
+                    * F2N(x__im(i, m)) / (3. * sqr(m_smu(m))) );
       }
    }
 
-   return alpha * model.get_MFe()(2) * oneOver16PiSqr; // check the smu-masses!!!
+   return alpha * model.get_MFe()(2) * oneOver16PiSqr;
 
 }
 
 double alpha_mu_cha(const @ModelName@<Two_scale>& model) {
    double alpha = 0.;
+   ComplexVector c__L = c_L(model);
+   ComplexVector c__R = c_R(model);
+   DoubleVector x__k = x_k(model);
    for(int k=1; k<=2; k++) {
-      alpha += (  model.get_MFe()(2) * ((sqr(fabs(c_L(model)(k)))) + sqr(fabs(c_R(model)(k))))
-                 * F1C(x_k(model)(k)) / (12. * sqr(model.get_MSv()(2)))
-                + model.get_MCha()(k) * real(c_L(model)(k) * c_R(model)(k))
-                 * F2C(x_k(model)(k)) / (3. * sqr(model.get_MSv()(2))) );
+      alpha += (  model.get_MFe()(2) * ((sqr(fabs(c__L(k)))) + sqr(fabs(c__R(k))))
+                 * F1C(x__k(k)) / (12. * sqr(model.get_MSv()(2)))
+                + model.get_MCha()(k) * real(c__L(k) * c__R(k))
+                 * F2C(x__k(k)) / (3. * sqr(model.get_MSv()(2))) );
    }
 
-   return alpha * model.get_MFe()(2) / sqr(4. * Pi);
+   return alpha * model.get_MFe()(2) * oneOver16PiSqr;
 }
 
 double calculate_gm2_1loop(const @ModelName@<Two_scale>& model) {
