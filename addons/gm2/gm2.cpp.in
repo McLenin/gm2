@@ -159,5 +159,11 @@ int main()
    INFO("alpha_cha = " << gm2::alpha_mu_cha(model));
    INFO("g-2 (1-loop) = " << gm2_1l);
 
+   INFO("amuWHnu = " << gm2::amuWHnu(model));
+   INFO("amuWHmuL = " << gm2::amuWHmuL(model));
+   INFO("amuBHmuL = " << gm2::amuBHmuL(model));
+   INFO("amuBHmuR = " << gm2::amuBHmuR(model));
+   INFO("amuBmuLmuR = " << gm2::amuBmuLmuR(model));
+
    return 0;
 }

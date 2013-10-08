@@ -47,6 +47,26 @@ double F2N(double x){
    return 3./cube(1.-x) * (1. - sqr(x) + 2. * x * log(x));
 }
 
+double Fa(double x, double y){
+   return - (G3(x) - G3(y)) / (x - y);
+
+}
+
+double Fb(double x, double y){
+   return - (G4(x) - G4(y)) / (x - y);
+
+}
+
+double G3(double x){
+   return 1. / (2. * cube(x - 1.)) * ((x - 1.) * (x - 3.) + 2. * log(x));
+
+}
+
+double G4(double x){
+   return 1. / (2. * cube(x - 1.)) * ((x - 1.) * (x + 1.) - 2. * x * log(x));
+
+}
+
 } // namespace gm2
 
 } // namespace flexiblesusy

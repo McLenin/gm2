@@ -27,6 +27,71 @@
 namespace flexiblesusy {
 namespace gm2 {
 
+double amuWHnu(const @ModelName@<Two_scale>& model) {
+   double tan_beta = model.get_vu() / model.get_vd();
+   double M2 = model.get_MassWB();
+   double MUE = model.get_Mu();
+   double MSf_112 = model.get_MSv()(2);
+
+   return ( sqr(model.get_g2()) * 2. * oneOver16PiSqr
+            * (sqr(model.get_MFe()(2)) * M2 * MUE * tan_beta)
+            / sqr(sqr(MSf_112))
+            * Fa(sqr(M2 / MSf_112), sqr(MUE / MSf_112)) );
+
+}
+
+double amuWHmuL(const @ModelName@<Two_scale>& model) {
+   double tan_beta = model.get_vu() / model.get_vd();
+   double M2 = model.get_MassWB();
+   double MUE = model.get_Mu();
+   double MSL_2 = sqrt(model.get_ml2()(1, 1));
+
+   return ( - sqr(model.get_g2()) * oneOver16PiSqr
+            * (sqr(model.get_MFe()(2)) * M2 * MUE * tan_beta)
+            / sqr(sqr(MSL_2))
+            * Fb(sqr(M2 / MSL_2), sqr(MUE / MSL_2)) );
+}
+
+double amuBHmuL(const @ModelName@<Two_scale>& model) {
+   double tan_beta = model.get_vu() / model.get_vd();
+   double M1 = model.get_MassB();
+   double MUE = model.get_Mu();
+   double MSL_2 = sqrt(model.get_ml2()(1, 1));
+   double gY = model.get_g1() * sqrt(3. / 5.);
+
+   return ( sqr(gY) * oneOver16PiSqr
+            * (sqr(model.get_MFe()(2)) * M1 * MUE * tan_beta)
+            / sqr(sqr(MSL_2))
+            * Fb(sqr(M1 / MSL_2), sqr(MUE / MSL_2)) );
+}
+
+double amuBHmuR(const @ModelName@<Two_scale>& model) {
+   double tan_beta = model.get_vu() / model.get_vd();
+   double M1 = model.get_MassB();
+   double MUE = model.get_Mu();
+   double MSE_2 = sqrt(model.get_me2()(1, 1));
+   double gY = model.get_g1() * sqrt(3. / 5.);
+
+   return ( - sqr(gY) * 2. * oneOver16PiSqr
+            * (sqr(model.get_MFe()(2)) * M1 * MUE * tan_beta)
+            / sqr(sqr(MSE_2))
+            * Fb(sqr(M1 / MSE_2), sqr(MUE / MSE_2)) );
+}
+
+double amuBmuLmuR(const @ModelName@<Two_scale>& model) {
+   double tan_beta = model.get_vu() / model.get_vd();
+   double M1 = model.get_MassB();
+   double MUE = model.get_Mu();
+   double MSL_2 = sqrt(model.get_ml2()(1, 1));
+   double MSE_2 = sqrt(model.get_me2()(1, 1));
+   double gY = model.get_g1() * sqrt(3. / 5.);
+
+   return ( sqr(gY) * 2. * oneOver16PiSqr
+            * (sqr(model.get_MFe()(2)) * MUE * tan_beta)
+            / M1 * sqr(M1)
+            * Fb(sqr(MSL_2 / M1), sqr(MSE_2 / M1)) );
+}
+
 ComplexMatrix n_L(const @ModelName@<Two_scale>& model) {
    ComplexMatrix n__L(4, 2);
    DoubleVector m_smu(2);

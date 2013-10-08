@@ -27,6 +27,10 @@ namespace gm2 {
    double F2C(double);
    double F1N(double);
    double F2N(double);
+   double Fa(double, double);
+   double Fb(double, double);
+   double G3(double);
+   double G4(double);
 
 } // namespace gm2
 

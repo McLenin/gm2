@@ -47,6 +47,12 @@ void FillSMuonMixingMatrix(const MSSM<Two_scale>&, DoubleVector&,
  *
  * @return g-2 at the one-loop level
  */
+double amuWHnu(const @ModelName@<Two_scale>&);
+double amuWHmuL(const @ModelName@<Two_scale>&);
+double amuBHmuL(const @ModelName@<Two_scale>&);
+double amuBHmuR(const @ModelName@<Two_scale>&);
+double amuBmuLmuR(const @ModelName@<Two_scale>&);
+
 ComplexMatrix n_L(const @ModelName@<Two_scale>&);
 ComplexMatrix n_R(const @ModelName@<Two_scale>&);
 
