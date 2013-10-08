@@ -35,7 +35,7 @@ double F1C(double x){
 }
 
 double F2C(double x){
-   return 3./(2. * cube(1.-x)) * (- 3. + 4. * x - sqr(x) - 2. * log(x));
+   return 3./(cube(1.-x)) * (- 3. + 4. * x - sqr(x) - 2. * log(x));
 }
 
 double F1N(double x){

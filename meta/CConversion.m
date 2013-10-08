@@ -412,7 +412,7 @@ ExpandSums[sum[index_, start_, stop_, expr_], variable_String, type_String:"Comp
            stopStr  = ToValidCSymbolString[stop];
            tmpSum   = CreateUniqueCVariable[];
            result = type <> " " <> tmpSum <> initialValue <> ";\n" <>
-                    "for (unsigned " <> idxStr <> " = " <>
+                    "for (unsigned int " <> idxStr <> " = " <>
                     startStr <> "; " <> idxStr <> " <= " <> stopStr <>
                     "; ++" <> idxStr <> ") {\n" <>
                     IndentText[ExpandSums[expr,tmpSum,type,initialValue]] <> "}\n" <>

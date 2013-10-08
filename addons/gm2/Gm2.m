@@ -36,7 +36,7 @@ WriteGm2[gm2_List, files_List] :=
            (* replace tokens in C++ template files *)
            WriteOut`ReplaceInFiles[files,
                { "@DateAndTime@" -> DateString[],
-                 "@Author@"      -> "Robert Greifenhagen <Max.Mustermann.de>",
+                 "@Author@"      -> "Robert Greifenhagen <robert.greifenhagen@tu-dresden.de>",
                  "@ModelName@"   -> FlexibleSUSY`FSModelName,
                  "@gm2_1l@"      -> gm2Str[[1]],
                  "@gm2_2l@"      -> gm2Str[[2]]
