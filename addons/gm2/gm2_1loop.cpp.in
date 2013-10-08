@@ -88,8 +88,14 @@ double amuBmuLmuR(const @ModelName@<Two_scale>& model) {
 
    return ( sqr(gY) * 2. * oneOver16PiSqr
             * (sqr(model.get_MFe()(2)) * MUE * tan_beta)
-            / M1 * sqr(M1)
+            / (M1 * sqr(M1))
             * Fb(sqr(MSL_2 / M1), sqr(MSE_2 / M1)) );
+}
+
+double amu1Lapprox(const @ModelName@<Two_scale>& model) {
+
+   return ( amuWHnu(model) + amuWHmuL(model) + amuBHmuL(model)
+            + amuBHmuR(model) + amuBmuLmuR(model) );
 }
 
 ComplexMatrix n_L(const @ModelName@<Two_scale>& model) {

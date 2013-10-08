@@ -52,6 +52,7 @@ double amuWHmuL(const @ModelName@<Two_scale>&);
 double amuBHmuL(const @ModelName@<Two_scale>&);
 double amuBHmuR(const @ModelName@<Two_scale>&);
 double amuBmuLmuR(const @ModelName@<Two_scale>&);
+double amu1Lapprox(const @ModelName@<Two_scale>&);
 
 ComplexMatrix n_L(const @ModelName@<Two_scale>&);
 ComplexMatrix n_R(const @ModelName@<Two_scale>&);
