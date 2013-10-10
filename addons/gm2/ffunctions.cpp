@@ -30,21 +30,21 @@ inline double quad(double x) { return sqr(x)*sqr(x); }
 namespace gm2 {
 
 double F1C(double x){
-   return 2./quad(1.-x) * (2. + 3. * x - 6. * sqr(x)
+   return 2. / quad(1. - x) * (2. + 3. * x - 6. * sqr(x)
                            + cube(x) + 6. * x * log(x));
 }
 
 double F2C(double x){
-   return 3./(cube(1.-x)) * (- 3. + 4. * x - sqr(x) - 2. * log(x));
+   return 3. / (2. * cube(1. - x)) * (- 3. + 4. * x - sqr(x) - 2. * log(x));
 }
 
 double F1N(double x){
-   return 2./quad(1.-x) * (1. - 6. * x + 3. * sqr(x)
+   return 2. / quad(1. - x) * (1. - 6. * x + 3. * sqr(x)
                           + 2. * cube(x) - 6. * sqr(x) * log(x));
 }
 
 double F2N(double x){
-   return 3./cube(1.-x) * (1. - sqr(x) + 2. * x * log(x));
+   return 3. / cube(1. - x) * (1. - sqr(x) + 2. * x * log(x));
 }
 
 double Fa(double x, double y){
