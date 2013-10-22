@@ -4,7 +4,8 @@ MODNAME      := libgm2
 LIBGM2_SRC := \
 		$(DIR)/ffunctions.cpp \
 		$(DIR)/gm2.cpp \
-		$(DIR)/gm2_1loop.cpp
+		$(DIR)/gm2_1loop.cpp \
+                $(DIR)/MSSM_gm2_wrapper.cpp
 
 LIBGM2_OBJ := \
 		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_SRC)))
@@ -21,7 +22,11 @@ LIBGM2_TEMPLATES := \
 		$(DIR)/gm2.cpp.in \
 		$(DIR)/gm2.hpp.in \
 		$(DIR)/gm2_1loop.cpp.in \
-		$(DIR)/gm2_1loop.hpp.in
+		$(DIR)/gm2_1loop.hpp.in \
+                $(DIR)/MSSM_gm2_wrapper.cpp.in \
+                $(DIR)/MSSM_gm2_wrapper.hpp.in \
+                $(DIR)/test_gm2_1loop.cpp.in \
+                $(DIR)/test_gm2_1loop.hpp.in
 
 GM2_EXE    := $(DIR)/gm2.x
 
