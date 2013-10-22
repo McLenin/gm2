@@ -20,7 +20,7 @@
 
 #include "logger.hpp"
 #include "gm2_1loop.hpp"
-#include "@ModelName@_two_scale_model.hpp"
+#include "MSSM_gm2_wrapper.hpp"
 #include "wrappers.hpp"
 
 using namespace flexiblesusy;
@@ -31,7 +31,7 @@ using namespace flexiblesusy;
  *
  * @param model model class to setup
  */
-void setup(@ModelName@<Two_scale>& model)
+void setup(gm2::MSSM_gm2_wrapper& model)
 {
    Eigen::Matrix<double,3,3> Yu;
    Eigen::Matrix<double,3,3> Yd;
@@ -150,21 +150,20 @@ void setup(@ModelName@<Two_scale>& model)
 
 int main()
 {
-   @ModelName@<Two_scale> model;
+   gm2::MSSM_gm2_wrapper model;
    setup(model);
 
    const double gm2_1l = gm2::calculate_gm2_1loop(model);
 
-   INFO("alpha_chi = " << gm2::alpha_mu_chi(model));
-   INFO("alpha_cha = " << gm2::alpha_mu_cha(model));
+   INFO("amuChi0 = " << gm2::amuChi0(model));
+   INFO("amuChipm = " << gm2::amuChipm(model));
    INFO("g-2 (1-loop) = " << gm2_1l);
 
    INFO("amuWHnu = " << gm2::amuWHnu(model));
-   INFO("amuWHmuL = " << gm2::amuWHmuL(model));
-   INFO("amuBHmuL = " << gm2::amuBHmuL(model));
-   INFO("amuBHmuR = " << gm2::amuBHmuR(model));
    INFO("amuBmuLmuR = " << gm2::amuBmuLmuR(model));
-   INFO("amu1Lapprox = " << gm2::amu1Lapprox(model));
+   INFO("amuBHmuL = " << gm2::amuBHmuL(model));
+   INFO("amuWHmuL = " << gm2::amuWHmuL(model));
+   INFO("amuBHmuR = " << gm2::amuBHmuR(model));
 
    return 0;
 }

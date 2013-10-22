@@ -21,6 +21,8 @@
 #ifndef GM2_H
 #define GM2_H
 
+#include "MSSM_gm2_wrapper.hpp"
+
 namespace flexiblesusy {
 
 } // namespace flexiblesusy
