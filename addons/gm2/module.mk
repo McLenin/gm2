@@ -25,6 +25,8 @@ LIBGM2_TEMPLATES := \
 
 GM2_EXE    := $(DIR)/gm2.x
 
+GM2_TEST_EXE := $(DIR)/test_gm2_1loop.x
+
 .PHONY:         all-$(MODNAME) clean-$(MODNAME) distclean-$(MODNAME)
 
 all-$(MODNAME): $(LIBGM2)
@@ -60,6 +62,12 @@ $(LIBGM2): $(LIBGM2_OBJ)
 $(GM2_EXE): $(DIR)/gm2.o $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
 		$(CXX) -o $@ $(abspath $^) $(GSLLIBS) $(FLIBS)
 
+$(GM2_TEST_EXE): $(DIR)/test_gm2_1loop.o $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
+		$(CXX) -o $@ $(abspath $^) $(GSLLIBS) $(FLIBS)
+
+# add boost and eigen flags for the test object files and dependencies
+$(GM2_TEST_EXE): CPPFLAGS += $(BOOSTFLAGS) $(EIGENFLAGS)
+
 ALLDEP += $(LIBGM2_DEP)
 ALLLIB += $(LIBGM2)
-ALLEXE += $(GM2_EXE)
+ALLEXE += $(GM2_EXE) $(GM2_TEST_EXE)
