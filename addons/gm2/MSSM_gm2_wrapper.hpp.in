@@ -1,0 +1,54 @@
+// ====================================================================
+// This file is part of FlexibleSUSY.
+//
+// FlexibleSUSY is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published
+// by the Free Software Foundation, either version 3 of the License,
+// or (at your option) any later version.
+//
+// FlexibleSUSY is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with FlexibleSUSY.  If not, see
+// <http://www.gnu.org/licenses/>.
+// ====================================================================
+
+// File generated at @DateAndTime@
+
+#ifndef MSSM_gm2_w
+#define MSSM_gm2_w
+
+#include "wrappers.hpp"
+#include "logger.hpp"
+#include "@ModelName@_two_scale_model.hpp"
+
+namespace flexiblesusy {
+namespace gm2 {
+
+class MSSM_gm2_wrapper : public @ModelName@<Two_scale> {
+public:
+   MSSM_gm2_wrapper()
+   : @ModelName@<Two_scale>(),
+   MSmu(2), USmu(2, 2)
+   { }
+
+   DoubleVector get_MSmu() const {return MSmu;}
+   DoubleMatrix get_USmu() const {return USmu;}
+   void set_MSmu(const DoubleVector& MSmu_new)
+   {MSmu = MSmu_new;}
+   void set_USmu(const DoubleMatrix& USmu_new)
+   {USmu = USmu_new;}
+   void calculate_DRbar_parameters();
+
+private:
+   DoubleVector MSmu;
+   DoubleMatrix USmu;
+};
+
+} // namespace gm2
+} // namespace flexiblesusy
+
+#endif
