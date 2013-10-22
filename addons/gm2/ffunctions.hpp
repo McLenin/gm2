@@ -31,6 +31,7 @@ namespace gm2 {
    double Fb(double, double);
    double G3(double);
    double G4(double);
+   double I(double, double, double);
 
 } // namespace gm2
 

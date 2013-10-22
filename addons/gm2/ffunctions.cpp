@@ -29,42 +29,54 @@ inline double quad(double x) { return sqr(x)*sqr(x); }
 
 namespace gm2 {
 
-double F1C(double x){
+double F1C(double x) {
+
    return 2. / quad(1. - x) * (2. + 3. * x - 6. * sqr(x)
                            + cube(x) + 6. * x * log(x));
 }
 
-double F2C(double x){
+double F2C(double x) {
+
    return 3. / (2. * cube(1. - x)) * (- 3. + 4. * x - sqr(x) - 2. * log(x));
 }
 
-double F1N(double x){
+double F1N(double x) {
+
    return 2. / quad(1. - x) * (1. - 6. * x + 3. * sqr(x)
                           + 2. * cube(x) - 6. * sqr(x) * log(x));
 }
 
-double F2N(double x){
+double F2N(double x) {
+
    return 3. / cube(1. - x) * (1. - sqr(x) + 2. * x * log(x));
 }
 
-double Fa(double x, double y){
+double Fa(double x, double y) {
+
    return - (G3(x) - G3(y)) / (x - y);
-
 }
 
-double Fb(double x, double y){
+double Fb(double x, double y) {
+
    return - (G4(x) - G4(y)) / (x - y);
-
 }
 
-double G3(double x){
+double G3(double x) {
+
    return 1. / (2. * cube(x - 1.)) * ((x - 1.) * (x - 3.) + 2. * log(x));
-
 }
 
-double G4(double x){
-   return 1. / (2. * cube(x - 1.)) * ((x - 1.) * (x + 1.) - 2. * x * log(x));
+double G4(double x) {
 
+   return 1. / (2. * cube(x - 1.)) * ((x - 1.) * (x + 1.) - 2. * x * log(x));
+}
+
+double I(double a, double b, double c) {
+
+   return ( (sqr(a * b) * log(sqr(a / b))
+           + sqr(b * c) * log(sqr(b / c))
+           + sqr(c * a) * log(sqr(c / a))) 
+           / ((sqr(a) - sqr(b)) * (sqr(b) - sqr(c)) * (sqr(a) - sqr(c))) );
 }
 
 } // namespace gm2
