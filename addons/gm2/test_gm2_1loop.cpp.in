@@ -1,0 +1,173 @@
+#include "test.h"
+#include "test_gm2_1loop.hpp"
+#include "MSSM_gm2_wrapper.hpp"
+
+namespace flexiblesusy {
+namespace gm2{
+
+void setup(MSSM_gm2_wrapper& model)
+{
+   Eigen::Matrix<double,3,3> Yu;
+   Eigen::Matrix<double,3,3> Yd;
+   Eigen::Matrix<double,3,3> Ye;
+   double Mu;
+   double g1;
+   double g2;
+   double g3;
+   double vd;
+   double vu;
+   Eigen::Matrix<double,3,3> TYu;
+   Eigen::Matrix<double,3,3> TYd;
+   Eigen::Matrix<double,3,3> TYe;
+   double BMu;
+   Eigen::Matrix<double,3,3> mq2;
+   Eigen::Matrix<double,3,3> ml2;
+   double mHd2;
+   double mHu2;
+   Eigen::Matrix<double,3,3> md2;
+   Eigen::Matrix<double,3,3> mu2;
+   Eigen::Matrix<double,3,3> me2;
+   double MassB;
+   double MassWB;
+   double MassG;
+
+   // susy parameters
+   Yu << 1.26136e-05,          0,          0,
+                   0, 0.00667469,          0,
+                   0,          0,   0.857849;
+
+   Yd << 0.000242026,          0,          0,
+                   0, 0.00529911,          0,
+                   0,          0,   0.193602;
+
+   Ye << 2.84161e-05,          0,          0,
+                   0, 0.00587557,          0,
+                   0,          0,    0.10199;
+
+   Mu = 627.164;
+   g1 = 0.468171;
+   g2 = 0.642353;
+   g3 = 1.06459;
+   vd = 25.0944;
+   vu = 242.968;
+
+   // soft parameters
+   TYu << -0.0144387,        0,        0, //f^uA^u
+                   0, -7.64037,        0,
+                   0,        0, -759.305;
+
+   TYd << -0.336207,        0,        0, // analog
+                  0, -7.36109,        0,
+                  0,        0, -250.124;
+
+   TYe << -0.00825134,        0,        0,
+                    0, -1.70609,        0,
+                    0,        0, -29.4466;
+
+   BMu = 52140.8;
+
+   mq2 << 1.03883e+06,           0,           0,//Massenterme squarks M_q^2
+                    0, 1.03881e+06,           0,
+                    0,           0,      879135;
+
+   ml2 << 124856,      0,      0,//analog
+               0, 124853,      0,
+               0,      0, 124142;
+
+   mHd2 = 92436.9; // massenterme higgse m_1^2
+   mHu2 = -380337; // m_2^2
+
+   md2 << 954454,      0,      0,
+               0, 954439,      0,
+               0,      0, 934727;
+
+   mu2 << 963422,      0,      0,
+               0, 963400,      0,
+               0,      0, 656621;
+
+   me2 << 49215.8,       0,       0,
+                0, 49210.9,       0,
+                0,       0, 47759.2;
+
+   MassB = 210.328; //massenterme superpartner eichbosonen, M_1
+   MassWB = 389.189;// M_2
+   MassG = 1114.45;// M_3
+
+   // set parameters
+   model.set_Yu(Yu);
+   model.set_Yd(Yd);
+   model.set_Ye(Ye);
+   model.set_Mu(Mu);
+   model.set_g1(g1);
+   model.set_g2(g2);
+   model.set_g3(g3);
+   model.set_vd(vd);
+   model.set_vu(vu);
+   model.set_TYu(TYu);
+   model.set_TYd(TYd);
+   model.set_TYe(TYe);
+   model.set_BMu(BMu);
+   model.set_mq2(mq2);
+   model.set_ml2(ml2);
+   model.set_mHd2(mHd2);
+   model.set_mHu2(mHu2);
+   model.set_md2(md2);
+   model.set_mu2(mu2);
+   model.set_me2(me2);
+   model.set_MassB(MassB);
+   model.set_MassWB(MassWB);
+   model.set_MassG(MassG);
+
+   // calculate tree-level masses
+   model.calculate_DRbar_parameters();
+}
+
+
+int main() {
+   MSSM_gm2_wrapper model;
+   setup(model);
+
+   model.set_g1(0.358494);
+   model.set_g2(0.635001);
+
+   Eigen::Matrix<double, 3, 3> Ye_neu(model.get_Ye());
+   double MW = 78.4507;
+   double tan_beta = model.get_vu() / model.get_vd();
+   double cos_beta = 1. / sqrt(1. + sqr(tan_beta));
+   Ye_neu(1, 1) = model.get_MFe()(2) * model.get_g2() / (sqrt(2.) * MW * cos_beta);
+   model.set_Ye(Ye_neu);
+
+   DoubleMatrix u_smu(2, 2);
+   DoubleVector m_smu(2);
+   u_smu(1, 1) = 0.999965;
+   u_smu(1, 2) = -0.00835274;
+   u_smu(2, 1) = 0.00835274;
+   u_smu(2, 2) = 0.999965;
+   m_smu(1) = 356.245;
+   m_smu(2) = 226.11;
+   model.set_USmu(u_smu);
+   model.set_MSmu(m_smu);
+
+   double amuBHmuL_ = amuBHmuL(model);
+   double amuBmuLmuR_ = amuBmuLmuR(model);
+   double amuWHnu_ = amuWHnu(model);
+   double amuWHmuL_ = amuWHmuL(model);
+   double amuBHmuR_ = amuBHmuR(model);
+
+   double amuChipm_ = amuChipm(model);
+   double amuChi0_ = amuChi0(model);
+
+   TEST_CLOSE(amuBHmuL_, 4.49377 * pow(10, -11), pow(10, -5));
+   TEST_CLOSE(amuBmuLmuR_, 4.47529 * pow(10, -10), pow(10, -5));
+   TEST_CLOSE(amuWHnu_, 6.84846 * pow(10, -10), pow(10, -5));
+   TEST_CLOSE(amuWHmuL_, -1.42674 * pow(10, -10), pow(10, -5));
+   TEST_CLOSE(amuBHmuR_, -1.73981 * pow(10, -10), pow(10, -5));
+
+   TEST_CLOSE(amuChi0_, 1.40498 * pow(10, -10), pow(10, -5));
+   TEST_CLOSE(amuChipm_, 6.85139 * pow(10, -10), pow(10, -5));
+
+   return gErrors;
+}
+
+} // gm2
+} // flexiblesusy
