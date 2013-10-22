@@ -18,16 +18,17 @@
 
 // File generated at @DateAndTime@
 
+#include "MSSM_gm2_wrapper.hpp"
 #include "gm2_1loop.hpp"
 #include "linalg.h"
 #include "logger.hpp"
 #include "wrappers.hpp"
-#include "@ModelName@_two_scale_model.hpp"
+#include <complex.h>
 
 namespace flexiblesusy {
 namespace gm2 {
 
-double amuWHnu(const @ModelName@<Two_scale>& model) {
+double amuWHnu(const MSSM_gm2_wrapper& model) {
    double tan_beta = model.get_vu() / model.get_vd();
    double M2 = model.get_MassWB();
    double MUE = model.get_Mu();
@@ -37,10 +38,9 @@ double amuWHnu(const @ModelName@<Two_scale>& model) {
             * (sqr(model.get_MFe()(2)) * M2 * MUE * tan_beta)
             / sqr(sqr(MSf_112))
             * Fa(sqr(M2 / MSf_112), sqr(MUE / MSf_112)) );
-
 }
 
-double amuWHmuL(const @ModelName@<Two_scale>& model) {
+double amuWHmuL(const MSSM_gm2_wrapper& model) {
    double tan_beta = model.get_vu() / model.get_vd();
    double M2 = model.get_MassWB();
    double MUE = model.get_Mu();
@@ -52,7 +52,7 @@ double amuWHmuL(const @ModelName@<Two_scale>& model) {
             * Fb(sqr(M2 / MSL_2), sqr(MUE / MSL_2)) );
 }
 
-double amuBHmuL(const @ModelName@<Two_scale>& model) {
+double amuBHmuL(const MSSM_gm2_wrapper& model) {
    double tan_beta = model.get_vu() / model.get_vd();
    double M1 = model.get_MassB();
    double MUE = model.get_Mu();
@@ -65,7 +65,7 @@ double amuBHmuL(const @ModelName@<Two_scale>& model) {
             * Fb(sqr(M1 / MSL_2), sqr(MUE / MSL_2)) );
 }
 
-double amuBHmuR(const @ModelName@<Two_scale>& model) {
+double amuBHmuR(const MSSM_gm2_wrapper& model) {
    double tan_beta = model.get_vu() / model.get_vd();
    double M1 = model.get_MassB();
    double MUE = model.get_Mu();
@@ -78,7 +78,7 @@ double amuBHmuR(const @ModelName@<Two_scale>& model) {
             * Fb(sqr(M1 / MSE_2), sqr(MUE / MSE_2)) );
 }
 
-double amuBmuLmuR(const @ModelName@<Two_scale>& model) {
+double amuBmuLmuR(const MSSM_gm2_wrapper& model) {
    double tan_beta = model.get_vu() / model.get_vd();
    double M1 = model.get_MassB();
    double MUE = model.get_Mu();
@@ -92,76 +92,83 @@ double amuBmuLmuR(const @ModelName@<Two_scale>& model) {
             * Fb(sqr(MSL_2 / M1), sqr(MSE_2 / M1)) );
 }
 
-double amu1Lapprox(const @ModelName@<Two_scale>& model) {
+double amu1Lapprox(const MSSM_gm2_wrapper& model) {
 
    return ( amuWHnu(model) + amuWHmuL(model) + amuBHmuL(model)
             + amuBHmuR(model) + amuBmuLmuR(model) );
 }
 
-ComplexMatrix n_L(const @ModelName@<Two_scale>& model) {
+ComplexMatrix n_L(const MSSM_gm2_wrapper& model) {
    ComplexMatrix n__L(4, 2);
-   DoubleVector m_smu(2);
-   DoubleMatrix u_smu(2, 2);
-   FillSMuonMixingMatrix(model, m_smu, u_smu);
+   double g1 = model.get_g1();
+   double g2 = model.get_g2();
+   double ymu = model.get_Ye()(1, 1);
+   ComplexMatrix ZN(model.get_ZN());
+   DoubleVector m_smu(model.get_MSmu());
+   DoubleMatrix u_smu(model.get_USmu());
    for(int i=1; i <=4; ++i) {
       for(int m=1; m <=2; ++m) {
-         n__L(i, m) = ( (sqrt(.5) * ( model.get_g1()*model.get_ZN()(i, 1)
-                                    + model.get_g2()*model.get_ZN()(i, 2) )
-                                  * Conj(u_smu(m, 1)) )
-                      - model.get_Ye()(1, 1)*model.get_ZN()(i, 3)
-                                  * Conj(u_smu(m, 2)) );
+         n__L(i, m) = ( (1. / sqrt(2.) * ( g1 * model.get_ZN()(i, 1)
+                                         + g2 * ZN(i, 2) ) * Conj(u_smu(m, 1)) )
+                      - ymu * ZN(i, 3) * Conj(u_smu(m, 2)) );
       }
    }
+
    return n__L;
 }
 
 
-ComplexMatrix n_R(const @ModelName@<Two_scale>& model) {
+ComplexMatrix n_R(const MSSM_gm2_wrapper& model) {
    ComplexMatrix n__R(4, 2);
-   DoubleVector m_smu(2);
-   DoubleMatrix u_smu(2, 2);
-   FillSMuonMixingMatrix(model, m_smu, u_smu);
+   double g1 = model.get_g1();
+   double ymu = model.get_Ye()(1, 1);
+   ComplexMatrix ZN(model.get_ZN());
+   DoubleVector m_smu(model.get_MSmu());
+   DoubleMatrix u_smu(model.get_USmu());
    for(int i=1; i <=4; ++i) {
       for(int m=1; m <=2; ++m) {
-         n__R(i, m) = ( sqrt(2.) * model.get_g1() * model.get_ZN()(i, 1) * u_smu(m, 2) 
-                       + model.get_Ye()(1, 1) * model.get_ZN()(i, 3) * u_smu(m, 1) );
+         n__R(i, m) = ( sqrt(2.) * g1 * ZN(i, 1) * u_smu(m, 2) 
+                       + ymu * ZN(i, 3) * u_smu(m, 1) );
       }
    }
+
    return n__R;
 }
 
-ComplexVector c_L(const @ModelName@<Two_scale>& model) {
+ComplexVector c_L(const MSSM_gm2_wrapper& model) {
    ComplexVector c__L(2);
+   double g2 = model.get_g2();
    for(int k=1; k<=2; ++k) {
-      c__L(k) = - model.get_g2() * model.get_UP()(k, 1);
+      c__L(k) = - g2 * model.get_UP()(k, 1);
    }
    return c__L;
 }
 
-ComplexVector c_R(const @ModelName@<Two_scale>& model) {
+ComplexVector c_R(const MSSM_gm2_wrapper& model) {
    ComplexVector c__R(2);
+   double ymu = model.get_Ye()(1, 1);
    for(int k=1; k<=2; ++k) {
-      c__R(k) = model.get_Ye()(1, 1) * model.get_UM()(k, 2);
+      c__R(k) = ymu * model.get_UM()(k, 2);
    }
 
    return c__R;
 }
 
-DoubleMatrix x_im(const @ModelName@<Two_scale>& model) {
+DoubleMatrix x_im(const MSSM_gm2_wrapper& model) {
    DoubleMatrix x__im(4, 2);
-   DoubleVector m_smu(2);
-   DoubleMatrix u_smu(2, 2);
-   FillSMuonMixingMatrix(model, m_smu, u_smu);
+   DoubleVector m_smu(model.get_MSmu());
+   DoubleMatrix u_smu(model.get_USmu());
+   DoubleVector MChi(model.get_MChi());
    for(int i=1; i <=4; ++i) {
       for(int m=1; m <=2; ++m) {
-         x__im(i, m) = sqr(model.get_MChi()(i) / m_smu(m));
+         x__im(i, m) = sqr(MChi(i) / m_smu(m));
       }
    }
 
    return x__im;
 }
 
-DoubleVector x_k(const @ModelName@<Two_scale>& model) {
+DoubleVector x_k(const MSSM_gm2_wrapper& model) {
    DoubleVector x__k(2);
    for(int k=1; k<=2; ++k) {
       x__k(k) = sqr(model.get_MCha()(k) / model.get_MSv()(2));
@@ -170,35 +177,34 @@ DoubleVector x_k(const @ModelName@<Two_scale>& model) {
    return x__k;
 }
 
-double alpha_mu_chi(const @ModelName@<Two_scale>& model) {
+double amuChi0(const MSSM_gm2_wrapper& model) {
    double alpha = 0.;
-   DoubleVector m_smu(2);
-   DoubleMatrix u_smu(2, 2);
-   FillSMuonMixingMatrix(model, m_smu, u_smu);
+   DoubleVector m_smu(model.get_MSmu());
+   DoubleMatrix u_smu(model.get_USmu());
    ComplexMatrix n__L = n_L(model);
    ComplexMatrix n__R = n_R(model);
    DoubleMatrix x__im = x_im(model);
+   DoubleVector MChi(model.get_MChi());
    for(int i=1; i<=4; ++i) {
       for(int m=1; m<=2; ++m) {
-         alpha += (- model.get_MFe()(2) * (sqr(fabs(n__L(i, m))) + sqr(fabs(n__R(i, m)))) 
+         alpha += (- model.get_MFe()(2) * (norm(n__L(i, m)) + norm(n__R(i, m)))
                     * F1N(x__im(i, m)) / (12. * sqr(m_smu(m)))
-                   + model.get_MChi()(i) * real(n__L(i, m) * n__R(i, m))
+                   + MChi(i) * real(n__L(i, m) * n__R(i, m))
                     * F2N(x__im(i, m)) / (3. * sqr(m_smu(m))) );
       }
    }
 
    return alpha * model.get_MFe()(2) * oneOver16PiSqr;
-
 }
 
-double alpha_mu_cha(const @ModelName@<Two_scale>& model) {
+double amuChipm(const MSSM_gm2_wrapper& model) {
    double alpha = 0.;
    ComplexVector c__L = c_L(model);
    ComplexVector c__R = c_R(model);
    DoubleVector x__k = x_k(model);
    DoubleVector MSv = model.get_MSv();
    for(int k=1; k<=2; ++k) {
-      alpha += (  model.get_MFe()(2) * (sqr(fabs(c__L(k))) + sqr(fabs(c__R(k))))
+      alpha += (  model.get_MFe()(2) * (norm(c__L(k)) + norm(c__R(k)))
                  * F1C(x__k(k)) / (12. * sqr(MSv(2)))
                 + 2. * model.get_MCha()(k) * real(c__L(k) * c__R(k))
                  * F2C(x__k(k)) / (3. * sqr(MSv(2))) );
@@ -207,44 +213,9 @@ double alpha_mu_cha(const @ModelName@<Two_scale>& model) {
    return alpha * model.get_MFe()(2) * oneOver16PiSqr;
 }
 
-double calculate_gm2_1loop(const @ModelName@<Two_scale>& model) {
+double calculate_gm2_1loop(const MSSM_gm2_wrapper& model) {
 
-   const double gm2 = ( alpha_mu_chi(model)
-                      + alpha_mu_cha(model) ); //@gm2_1l@;
-
-   return gm2;
-}
-
-/**
- * Fills 2x2 smuon mixing matrix and mass vector.
- *
- * @param model model parameter class
- * @param m smuon mass vector (size 2)
- * @param u smuon mixing matrix (size 2x2)
- */
-void FillSMuonMixingMatrix(const MSSM<Two_scale>& model, DoubleVector& m,
-                           DoubleMatrix& u)
-{
-   if (m.size() != 2)
-      FATAL("Mass vector must have size 2");
-   if (u.displayRows() != 2 || u.displayCols() != 2)
-      FATAL("Mixing matrix must be of the form 2x2");
-
-   const DoubleMatrix mass_matrix_6x6(model.get_mass_matrix_Se());
-
-   DoubleMatrix mass_matrix_2x2(2,2);
-   mass_matrix_2x2(1,1) = mass_matrix_6x6(2,2);
-   mass_matrix_2x2(1,2) = mass_matrix_6x6(2,5);
-   mass_matrix_2x2(2,1) = mass_matrix_6x6(5,2);
-   mass_matrix_2x2(2,2) = mass_matrix_6x6(5,5);
-
-   Diagonalize2by2(mass_matrix_2x2, u, m);
-
-   int min_element;
-   if (m.min(min_element) < 0.)
-      ERROR("SMuon is a Tachyon");
-
-   m = AbsSqrt(m);
+   return amuChi0(model) + amuChipm(model); //@gm2_1l@;
 }
 
 } // namespace gm2
