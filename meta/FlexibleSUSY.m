@@ -22,7 +22,7 @@ FSLesHouchesList;
 FSUnfixedParameters;
 InputParameters;
 DefaultParameterPoint;
-ParametersToSolveTadpoles;
+EWSBOutputParameters;
 SUSYScale;
 SUSYScaleFirstGuess;
 SUSYScaleInput;
@@ -285,8 +285,8 @@ WriteConstraintClass[condition_, settings_List, scaleFirstGuess_, files_List] :=
           calculateDeltaAlphaEm   = ThresholdCorrections`CalculateDeltaAlphaEm[];
           calculateDeltaAlphaS    = ThresholdCorrections`CalculateDeltaAlphaS[];
           setDRbarYukawaCouplings = ThresholdCorrections`SetDRbarYukawaCouplings[];
-          saveEwsbOutputParameters    = Parameters`SaveParameterLocally[ParametersToSolveTadpoles, "old_", "MODELPARAMETER"];
-          restoreEwsbOutputParameters = Parameters`RestoreParameter[ParametersToSolveTadpoles, "old_", "model"];
+          saveEwsbOutputParameters    = Parameters`SaveParameterLocally[FlexibleSUSY`EWSBOutputParameters, "old_", "MODELPARAMETER"];
+          restoreEwsbOutputParameters = Parameters`RestoreParameter[FlexibleSUSY`EWSBOutputParameters, "old_", "model"];
           WriteOut`ReplaceInFiles[files,
                  { "@applyConstraint@"      -> IndentText[WrapLines[applyConstraint]],
                    "@calculateScale@"       -> IndentText[WrapLines[calculateScale]],
@@ -321,6 +321,42 @@ WriteConvergenceTesterClass[particles_List, files_List] :=
                    Sequence @@ GeneralReplacementRules[]
                  } ];
           ];
+
+(* Returns a list of three-component list where the information is stored
+   which vev corresponds to which CP even mass eigenstate.
+
+   Example: MRSSM
+   It[] := vevs = {vd,vu,vT,vS};
+   It[] := CreateVEVsToFieldsAssociation[vevs]
+   Out[] = {{vd, hh, 1}, {vu, hh, 2}, {vT, hh, 4}, {vS, hh, 3}}
+ *)
+CreateVEVsToFieldsAssociation[vevs_List] :=
+    Module[{association = {}, v, phi, higgs},
+           For[v = 1, v <= Length[vevs], v++,
+               (* find CP even gauge-eigenstate Higgs for the vev *)
+               phi = Cases[SARAH`DEFINITION[FlexibleSUSY`FSEigenstates][SARAH`VEVs],
+                           {_, {vevs[[v]], _}, {__}, {p_,_}} :> p
+                          ];
+               If[Head[phi] =!= List || Length[phi] != 1,
+                  Print["Error: could not find CP even Higgs field for vev ", vevs[[v]]];
+                  Quit[1];
+                 ];
+               phi = phi[[1]];
+               (* find position of phi in the CP even mass eigenstate vector *)
+               higgs = Cases[SARAH`DEFINITION[FlexibleSUSY`FSEigenstates][SARAH`MatterSector],
+                             {ps__ /; MemberQ[ps, phi], {h_,_}} :> {h, Position[ps, phi][[1,1]]}
+                            ];
+               If[Head[higgs] =!= List || Length[higgs] != 1,
+                  Print["Error: could not find CP even Higgs field ", phi,
+                        " in MatterSector definitions "];
+                  Quit[1];
+                 ];
+               higgs = higgs[[1]];
+               AppendTo[association, {vevs[[v]], higgs[[1]], higgs[[2]]}];
+              ];
+           Return[association];
+          ];
+
 
 WriteModelClass[massMatrices_List, vevs_List, ewsbEquations_List,
                 parametersFixedByEWSB_List, ewsbSolution_List, freePhases_List,
@@ -380,7 +416,7 @@ WriteModelClass[massMatrices_List, vevs_List, ewsbEquations_List,
                     " parameters: ", parametersFixedByEWSB];
              ];
            oneLoopTadpoles              = Cases[nPointFunctions, SelfEnergies`Tadpole[___]];
-           calculateOneLoopTadpoles     = SelfEnergies`FillArrayWithOneLoopTadpoles[oneLoopTadpoles];
+           calculateOneLoopTadpoles     = SelfEnergies`FillArrayWithOneLoopTadpoles[CreateVEVsToFieldsAssociation[vevs]];
            calculateTreeLevelTadpoles   = EWSB`FillArrayWithEWSBEqs[vevs, parametersFixedByEWSB, freePhases];
            ewsbInitialGuess             = EWSB`FillInitialGuessArray[parametersFixedByEWSB];
            solveEwsbTreeLevel           = EWSB`CreateTreeLevelEwsbSolver[ewsbSolution];
@@ -402,8 +438,8 @@ WriteModelClass[massMatrices_List, vevs_List, ewsbEquations_List,
            printMixingMatrices          = WriteOut`PrintParameters[mixingMatrices, "ostr"];
            dependenceNumPrototypes      = TreeMasses`CreateDependenceNumPrototypes[];
            dependenceNumFunctions       = TreeMasses`CreateDependenceNumFunctions[];
-           saveEwsbOutputParameters     = Parameters`SaveParameterLocally[ParametersToSolveTadpoles, "one_loop_", ""];
-           restoreEwsbOutputParameters  = Parameters`RestoreParameter[ParametersToSolveTadpoles, "one_loop_", ""];
+           saveEwsbOutputParameters     = Parameters`SaveParameterLocally[FlexibleSUSY`EWSBOutputParameters, "one_loop_", ""];
+           restoreEwsbOutputParameters  = Parameters`RestoreParameter[FlexibleSUSY`EWSBOutputParameters, "one_loop_", ""];
            If[Head[SARAH`ListSoftBreakingScalarMasses] === List,
               softScalarMasses          = DeleteDuplicates[SARAH`ListSoftBreakingScalarMasses];,
               Print["Error: no soft breaking scalar masses found!"];
@@ -648,6 +684,12 @@ PrepareUnrotatedParticles[eigenstates_] :=
 ReadDiagonalizationPrecisions[defaultPrecision_Symbol, highPrecisionList_List,
                               mediumPrecisionList_List, lowPrecisionList_List, eigenstates_] :=
     Module[{particles, particle, i, precisionList = {}},
+           If[!MemberQ[{LowPrecision, MediumPrecision, HighPrecision}, defaultPrecision],
+              Print["Error: ", defaultPrecision, " is not a valid",
+                    " diagonalization precision!"];
+              Print["   Available are: LowPrecision, MediumPrecision, HighPrecision"];
+              Quit[1];
+             ];
            particles = LoopMasses`GetLoopCorrectedParticles[eigenstates];
            For[i = 1, i <= Length[particles], i++,
                particle = particles[[i]];
@@ -792,7 +834,7 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
            FlexibleSUSY`FSLesHouchesList = SA`LHList;
 
            (* search for unfixed parameters *)
-           fixedParameters = Join[ParametersToSolveTadpoles,
+           fixedParameters = Join[FlexibleSUSY`EWSBOutputParameters,
                                   Constraint`FindFixedParametersFromConstraint[FlexibleSUSY`LowScaleInput],
                                   Constraint`FindFixedParametersFromConstraint[FlexibleSUSY`SUSYScaleInput],
                                   Constraint`FindFixedParametersFromConstraint[FlexibleSUSY`HighScaleInput]
@@ -842,7 +884,7 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
                     " EWSB equations but ", Length[vevs], " VEVs"];
               ewsbEquations = {};
               vevs = {};
-              ParametersToSolveTadpoles = {};
+              FlexibleSUSY`EWSBOutputParameters = {};
               Quit[1];
              ];
 
@@ -852,7 +894,7 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
                                                       FlexibleSUSY`FSModelName <> "_tree_level_EWSB_solution.m"}];
               Print["Solving EWSB equations ..."];
               {ewsbSolution, freePhases} = EWSB`FindSolutionAndFreePhases[ewsbEquations,
-                                                                          ParametersToSolveTadpoles,
+                                                                          FlexibleSUSY`EWSBOutputParameters,
                                                                           treeLevelEwsbOutputFile];
               If[ewsbSolution === {},
                  Print["Warning: could not find an analytic solution to the EWSB eqs."];
@@ -860,9 +902,9 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
                  Print["   the solution by hand in the model file like this:"];
                  Print[""];
                  Print["   TreeLevelEWSBSolution = {"];
-                 For[i = 1, i <= Length[ParametersToSolveTadpoles], i++,
-                     Print["      { ", ParametersToSolveTadpoles[[i]], ", ... }" <>
-                           If[i != Length[ParametersToSolveTadpoles], ",", ""]];
+                 For[i = 1, i <= Length[FlexibleSUSY`EWSBOutputParameters], i++,
+                     Print["      { ", FlexibleSUSY`EWSBOutputParameters[[i]], ", ... }" <>
+                           If[i != Length[FlexibleSUSY`EWSBOutputParameters], ",", ""]];
                     ];
                  Print["   };\n"];
                  Print["   The tree-level EWSB solution was written to the file:"];
@@ -873,9 +915,9 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
                  Print["Error: not enough EWSB solutions given!"];
                  Quit[1];
                 ];
-              If[Sort[#[[1]]& /@ FlexibleSUSY`TreeLevelEWSBSolution] =!= Sort[ParametersToSolveTadpoles],
+              If[Sort[#[[1]]& /@ FlexibleSUSY`TreeLevelEWSBSolution] =!= Sort[FlexibleSUSY`EWSBOutputParameters],
                  Print["Error: Parameters given in TreeLevelEWSBSolution, do not match"];
-                 Print["   the Parameters given in ParametersToSolveTadpoles!"];
+                 Print["   the Parameters given in FlexibleSUSY`EWSBOutputParameters!"];
                  Quit[1];
                 ];
               Print["Using user-defined EWSB eqs. solution"];
@@ -1037,7 +1079,7 @@ MakeFlexibleSUSY[OptionsPattern[]] :=
            PrintHeadline["Creating model"];
            Print["Creating class for model ..."];
            WriteModelClass[massMatrices, vevs, ewsbEquations,
-                           ParametersToSolveTadpoles, ewsbSolution, freePhases,
+                           FlexibleSUSY`EWSBOutputParameters, ewsbSolution, freePhases,
                            nPointFunctions, phases, OptionValue[EnablePoleMassThreads],
                            {{FileNameJoin[{Global`$flexiblesusyTemplateDir, "model.hpp.in"}],
                              FileNameJoin[{Global`$flexiblesusyOutputDir, FlexibleSUSY`FSModelName <> "_model.hpp"}]},
