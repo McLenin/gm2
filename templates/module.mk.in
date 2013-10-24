@@ -2,11 +2,10 @@ DIR          := @DIR@
 MODNAME      := lib@CLASSNAME@
 
 LIB@CLASSNAME@_SRC :=
+EXE@CLASSNAME@_SRC :=
 
 ifneq ($(findstring two_scale,$(ALGORITHMS)),)
 LIB@CLASSNAME@_SRC += \
-		$(DIR)/run_@CLASSNAME@.cpp \
-		$(DIR)/scan_@CLASSNAME@.cpp \
 		$(DIR)/@CLASSNAME@_info.cpp \
 		$(DIR)/@CLASSNAME@_slha_io.cpp \
 		$(DIR)/@CLASSNAME@_physical.cpp \
@@ -19,12 +18,13 @@ LIB@CLASSNAME@_SRC += \
 		$(DIR)/@CLASSNAME@_two_scale_susy_parameters.cpp \
 		$(DIR)/@CLASSNAME@_two_scale_soft_parameters.cpp \
 		$(DIR)/@CLASSNAME@_two_scale_susy_scale_constraint.cpp
+EXE@CLASSNAME@_SRC += \
+		$(DIR)/run_@CLASSNAME@.cpp \
+		$(DIR)/scan_@CLASSNAME@.cpp
 endif
 
 ifneq ($(findstring lattice,$(ALGORITHMS)),)
 LIB@CLASSNAME@_SRC += \
-		$(DIR)/run_@CLASSNAME@.cpp \
-		$(DIR)/scan_@CLASSNAME@.cpp \
 		$(DIR)/@CLASSNAME@_info.cpp \
 		$(DIR)/@CLASSNAME@_slha_io.cpp \
 		$(DIR)/@CLASSNAME@_physical.cpp \
@@ -35,161 +35,122 @@ LIB@CLASSNAME@_SRC += \
 		$(DIR)/@CLASSNAME@_lattice_low_scale_constraint.cpp \
 		$(DIR)/@CLASSNAME@_lattice_model.cpp \
 		$(DIR)/@CLASSNAME@_lattice_susy_scale_constraint.cpp
+EXE@CLASSNAME@_SRC += \
+		$(DIR)/run_@CLASSNAME@.cpp \
+		$(DIR)/scan_@CLASSNAME@.cpp
 endif
 
 # remove duplicates in case all algorithms are used
 LIB@CLASSNAME@_SRC := $(sort $(LIB@CLASSNAME@_SRC))
+EXE@CLASSNAME@_SRC := $(sort $(EXE@CLASSNAME@_SRC))
 
 LIB@CLASSNAME@_OBJ := \
 		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIB@CLASSNAME@_SRC))) \
 		$(patsubst %.f, %.o, $(filter %.f, $(LIB@CLASSNAME@_SRC)))
 
+EXE@CLASSNAME@_OBJ := \
+		$(patsubst %.cpp, %.o, $(filter %.cpp, $(EXE@CLASSNAME@_SRC))) \
+		$(patsubst %.f, %.o, $(filter %.f, $(EXE@CLASSNAME@_SRC)))
+
 LIB@CLASSNAME@_DEP := \
 		$(LIB@CLASSNAME@_OBJ:.o=.d)
 
-$(LIB@CLASSNAME@_DEP) $(LIB@CLASSNAME@_OBJ): CPPFLAGS += $(GSLFLAGS)
+EXE@CLASSNAME@_DEP := \
+		$(EXE@CLASSNAME@_OBJ:.o=.d)
 
 LIB@CLASSNAME@     := $(DIR)/$(MODNAME)$(LIBEXT)
 
+RUN_@CLASSNAME@_OBJ := $(DIR)/run_@CLASSNAME@.o
 RUN_@CLASSNAME@_EXE := $(DIR)/run_@CLASSNAME@.x
 
+SCAN_@CLASSNAME@_OBJ := $(DIR)/scan_@CLASSNAME@.o
 SCAN_@CLASSNAME@_EXE := $(DIR)/scan_@CLASSNAME@.x
 
-.PHONY:         all-$(MODNAME) clean-$(MODNAME) distclean-$(MODNAME)
+.PHONY:         all-$(MODNAME) clean-$(MODNAME) distclean-$(MODNAME) run-metacode-$(MODNAME)
 
 all-$(MODNAME): $(LIB@CLASSNAME@)
 
 clean-$(MODNAME):
 		rm -rf $(LIB@CLASSNAME@_OBJ)
+		rm -rf $(EXE@CLASSNAME@_OBJ)
 
 distclean-$(MODNAME): clean-$(MODNAME)
 		rm -rf $(LIB@CLASSNAME@_DEP)
 		rm -rf $(LIB@CLASSNAME@)
+		rm -rf $(EXE@CLASSNAME@_DEP)
+		rm -rf $(RUN_@CLASSNAME@_EXE)
+		rm -rf $(SCAN_@CLASSNAME@_EXE)
 
 clean::         clean-$(MODNAME)
 
 distclean::     distclean-$(MODNAME)
 
-$(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp: $(DIR)/start.m $(DIR)/FlexibleSUSY.m $(META_SRC) $(TEMPLATES)
-	$(MATH) -run "Get[\"$<\"]; Quit[]"
+METACODE_STAMP_@CLASSNAME@ := $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
 
-$(DIR)/@CLASSNAME@_two_scale_susy_parameters.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
+$(DIR)/@CLASSNAME@_two_scale_susy_parameters.cpp \
+$(DIR)/@CLASSNAME@_two_scale_soft_parameters.hpp \
+$(DIR)/@CLASSNAME@_two_scale_soft_parameters.cpp \
+$(DIR)/scan_@CLASSNAME@.cpp \
+$(DIR)/@CLASSNAME@_slha_io.hpp \
+$(DIR)/@CLASSNAME@_slha_io.cpp \
+$(DIR)/@CLASSNAME@_physical.hpp \
+$(DIR)/@CLASSNAME@_physical.cpp \
+$(DIR)/@CLASSNAME@_model.hpp \
+$(DIR)/@CLASSNAME@_lattice_model.hpp \
+$(DIR)/@CLASSNAME@_lattice_model.cpp \
+$(DIR)/@CLASSNAME@_two_scale_model.hpp \
+$(DIR)/@CLASSNAME@_two_scale_model.cpp \
+$(DIR)/run_@CLASSNAME@.cpp \
+$(DIR)/@CLASSNAME@_high_scale_constraint.cpp \
+$(DIR)/@CLASSNAME@_susy_scale_constraint.cpp \
+$(DIR)/@CLASSNAME@_low_scale_constraint.cpp \
+$(DIR)/@CLASSNAME@_lattice_high_scale_constraint.cpp \
+$(DIR)/@CLASSNAME@_two_scale_high_scale_constraint.cpp \
+$(DIR)/@CLASSNAME@_lattice_susy_scale_constraint.cpp \
+$(DIR)/@CLASSNAME@_two_scale_susy_scale_constraint.cpp \
+$(DIR)/@CLASSNAME@_lattice_low_scale_constraint.cpp \
+$(DIR)/@CLASSNAME@_two_scale_low_scale_constraint.cpp \
+$(DIR)/@CLASSNAME@_convergence_tester.hpp \
+$(DIR)/@CLASSNAME@_lattice_convergence_tester.cpp \
+$(DIR)/@CLASSNAME@_two_scale_convergence_tester.cpp \
+$(DIR)/@CLASSNAME@_initial_guesser.cpp \
+$(DIR)/@CLASSNAME@_lattice_initial_guesser.cpp \
+$(DIR)/@CLASSNAME@_two_scale_initial_guesser.cpp \
+$(DIR)/@CLASSNAME@_info.hpp \
+$(DIR)/@CLASSNAME@_info.cpp \
+$(DIR)/@CLASSNAME@_spectrum_generator.hpp \
+$(DIR)/@CLASSNAME@_utilities.hpp \
+$(DIR)/@CLASSNAME@_utilities.cpp \
+: run-metacode-$(MODNAME)
+		@true
 
-$(DIR)/@CLASSNAME@_two_scale_soft_parameters.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
+run-metacode-$(MODNAME): $(METACODE_STAMP_@CLASSNAME@)
+		@true
 
-$(DIR)/@CLASSNAME@_two_scale_soft_parameters.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
+ifeq ($(ENABLE_META),yes)
+$(METACODE_STAMP_@CLASSNAME@): $(DIR)/start.m $(DIR)/FlexibleSUSY.m $(META_SRC) $(TEMPLATES)
+		$(MATH) -run "Get[\"$<\"]; Quit[]"
+else
+$(METACODE_STAMP_@CLASSNAME@):
+		@true
+endif
 
-$(DIR)/scan_@CLASSNAME@.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
+$(LIB@CLASSNAME@_DEP) $(EXE@CLASSNAME@_DEP) $(LIB@CLASSNAME@_OBJ) $(EXE@CLASSNAME@_OBJ): CPPFLAGS += $(GSLFLAGS) $(EIGENFLAGS) $(BOOSTFLAGS)
 
-$(DIR)/@CLASSNAME@_slha_io.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_slha_io.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_physical.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_physical.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_model.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_lattice_model.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_lattice_model.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_two_scale_model.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_two_scale_model.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/run_@CLASSNAME@.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_high_scale_constraint.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_susy_scale_constraint.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_low_scale_constraint.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_lattice_high_scale_constraint.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_two_scale_high_scale_constraint.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_lattice_susy_scale_constraint.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_two_scale_susy_scale_constraint.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_lattice_low_scale_constraint.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_two_scale_low_scale_constraint.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_convergence_tester.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_lattice_convergence_tester.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_two_scale_convergence_tester.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_initial_guesser.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_lattice_initial_guesser.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_two_scale_initial_guesser.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_info.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_info.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_spectrum_generator.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_utilities.hpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(DIR)/@CLASSNAME@_utilities.cpp: $(DIR)/@CLASSNAME@_two_scale_susy_parameters.hpp
-	@true
-
-$(LIB@CLASSNAME@_DEP) $(LIB@CLASSNAME@_OBJ) $(DIR)/run_@CLASSNAME@.o $(DIR)/scan_@CLASSNAME@.o: CPPFLAGS += $(GSLFLAGS) $(EIGENFLAGS) $(BOOSTFLAGS)
+ifeq ($(ENABLE_LOOPTOOLS),yes)
+$(LIB@CLASSNAME@_DEP) $(EXE@CLASSNAME@_DEP) $(LIB@CLASSNAME@_OBJ) $(EXE@CLASSNAME@_OBJ): CPPFLAGS += $(LOOPTOOLSFLAGS)
+endif
 
 $(LIB@CLASSNAME@): $(LIB@CLASSNAME@_OBJ)
 		$(MAKELIB) $@ $^
 
-ifeq ($(ENABLE_LOOPTOOLS),yes)
-$(LIB@CLASSNAME@_OBJ) $(LIB@CLASSNAME@_DEP): CPPFLAGS += $(LOOPTOOLSFLAGS)
-endif
+$(RUN_@CLASSNAME@_EXE): $(RUN_@CLASSNAME@_OBJ) $(LIB@CLASSNAME@) $(LIBFLEXI) $(LIBLEGACY)
+		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(THREADLIBS) $(LAPACKLIBS) $(FLIBS) $(LOOPTOOLSLIBS)
 
-$(RUN_@CLASSNAME@_EXE): $(DIR)/run_@CLASSNAME@.o $(LIB@CLASSNAME@) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(LAPACKLIBS) $(FLIBS) $(LOOPTOOLSLIBS)
+$(SCAN_@CLASSNAME@_EXE): $(SCAN_@CLASSNAME@_OBJ) $(LIB@CLASSNAME@) $(LIBFLEXI) $(LIBLEGACY)
+		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(THREADLIBS) $(LAPACKLIBS) $(FLIBS) $(LOOPTOOLSLIBS)
 
-$(SCAN_@CLASSNAME@_EXE): $(DIR)/scan_@CLASSNAME@.o $(LIB@CLASSNAME@) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(LAPACKLIBS) $(FLIBS) $(LOOPTOOLSLIBS)
-
-ALLDEP += $(LIB@CLASSNAME@_DEP)
+ALLDEP += $(LIB@CLASSNAME@_DEP) $(EXE@CLASSNAME@_DEP)
+ALLSRC += $(LIB@CLASSNAME@_SRC) $(EXE@CLASSNAME@_SRC)
 ALLLIB += $(LIB@CLASSNAME@)
 ALLEXE += $(RUN_@CLASSNAME@_EXE) $(SCAN_@CLASSNAME@_EXE)

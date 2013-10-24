@@ -4,7 +4,10 @@
 # Author: Alexander Voigt
 
 PROGRAM_NAME=FlexibleSUSY
-PROGRAM_VERSION=0.4.1
+FLEXIBLESUSY_MAJOR=0
+FLEXIBLESUSY_MINOR=4
+FLEXIBLESUSY_PATCH=2
+FLEXIBLESUSY_VERSION="${FLEXIBLESUSY_MAJOR}.${FLEXIBLESUSY_MINOR}.${FLEXIBLESUSY_PATCH}"
 
 # directory of this script
 BASEDIR=$(dirname $0)
@@ -13,7 +16,6 @@ BASEDIR=$(dirname $0)
 ABSBASEDIR=$(cd $BASEDIR; pwd)
 
 # platform information
-linuxdist=""
 debmultiarch=""
 
 # default library directories
@@ -23,6 +25,10 @@ default_inc_paths="/usr/include /usr/local/include"
 # configure log file
 logfile="$BASEDIR/config.log"
 statusfile="$BASEDIR/config.status"
+sarahconfig="$BASEDIR/config.sarah"
+boostconfig="$BASEDIR/config.boost"
+gppconfig="$BASEDIR/config.g++"
+mathconfig="$BASEDIR/config.math"
 
 # whether we are in 32-bit or 64-bit environment
 machine_word_size=""
@@ -39,19 +45,27 @@ FSCONFIG_TMPL=$BASEDIR/config/flexiblesusy-config.in
 CONFIGHDR=$BASEDIR/config/config.h
 CONFIGHDR_TMPL=$BASEDIR/config/config.h.in
 
+# target tex file with package version
+TEXVERSION=$BASEDIR/doc/version.tex
+TEXVERSION_TMPL=$BASEDIR/doc/version.tex.in
+
 # options
 deprecated_options=""
 options="                    \
    enable_colors             \
+   enable_compile            \
    enable_debug              \
    enable_looptools          \
+   enable_meta               \
    enable_silent             \
    enable_static_libs        \
    enable_verbose            \
 "
+enable_compile="yes"
 enable_colors="no"
 enable_debug=""
 enable_looptools="no"
+enable_meta="yes"
 enable_silent="no"
 enable_static_libs="yes"
 enable_verbose="no"
@@ -73,6 +87,7 @@ FFLAGS="-O2 -frecursive"
 FLIBS=""
 BOOSTTESTLIBS=""
 BOOSTTHREADLIBS=""
+THREADLIBS=""
 LIBEXT=".a"
 CXX="g++"
 EIGENFLAGS=""
@@ -88,6 +103,21 @@ available_algorithms="two_scale lattice"
 MODELS="all"
 # addons that will be compiled
 ADDONS="none"
+
+# required boost version
+required_boost_major="1"
+required_boost_minor="49"
+required_boost_patch="0"
+required_boost_version="${required_boost_major}.${required_boost_minor}.${required_boost_patch}"
+
+# required g++ version
+required_gpp_major="4"
+required_gpp_minor="6"
+required_gpp_patch="0"
+required_gpp_version="${required_gpp_major}.${required_gpp_minor}.${required_gpp_patch}"
+
+# required Mathematica version
+required_mathematica_version="7"
 
 #_____________________________________________________________________
 write_configure_parameters() {
@@ -127,12 +157,15 @@ logmsg() {
 guess_machine_word_size() {
     chip=`uname -m | tr '[A-Z]' '[a-z]'`
     case "$chip" in
-	*32) machine_word_size="32"; return 0 ;;
-	*64) machine_word_size="64"; return 0 ;;
-	*)   message "Warning: could not guess machine word size"; return 1 ;;
+        *32) machine_word_size="32"; return 0 ;;
+        *64) machine_word_size="64"; return 0 ;;
+        *)   machine_word_size="unknown"
+             message "Warning: could not guess machine word size"
+             return 1 ;;
     esac
 }
 
+#_____________________________________________________________________
 contains() {
     # Check if string $1 contains $2
     if test $# -lt 2 ; then
@@ -149,6 +182,7 @@ contains() {
     return 1 # not found
 }
 
+#_____________________________________________________________________
 contains_not() {
     # Check if string $1 does not contain $2
     if test $# -lt 2 ; then
@@ -324,7 +358,8 @@ checking_msg() {
 #_____________________________________________________________________
 result() {
     echo "$*"
-    logmsg "Result: $*"
+    logmsg ""
+    logmsg "   Result: $*"
 }
 
 #_____________________________________________________________________
@@ -334,6 +369,10 @@ check_symbol() {
     # The result of the check is stored in found_symbol, 1 if true,
     # 0 otherwise, which should be immediately copied, since the variable
     # will be overwritten at next invocation of this function.
+
+    local symbol
+    local symbollib
+    local symboldir
 
     # Assert that we got enough arguments
     if test $# -ne 3 ; then
@@ -349,9 +388,6 @@ check_symbol() {
 
     if test "x$symbollib" = "x" ; then
         found_symbol=0
-        unset symbol
-        unset symbollib
-        unset symboldir
         return 1
     fi
 
@@ -401,9 +437,6 @@ check_symbol() {
     if test "x$symbolfile" = "x" || test ! -r $symbolfile ; then
        found_symbol=0
        logmsg " Symbol not found"
-       unset symbol
-       unset symbollib
-       unset symboldir
        return 1
     fi
 
@@ -412,7 +445,7 @@ check_symbol() {
     nm -D $symbolfile 2>&1 | grep $symbol > /dev/null 2>&1
     if test $? -eq 0 ; then
         found_symbol=1
-        logmsg " Symbol found"
+        logmsg -n "symbol found"
     else
         nm $symbolfile 2>&1 | grep "no symbols" > /dev/null 2>&1
         # if test $? -eq 0 ; then
@@ -424,15 +457,14 @@ check_symbol() {
             found_symbol=0
         # fi
     fi
+
     if test $found_symbol -eq 1 ; then
         result "ok"
+	return 0
     else
         result "no"
+	return 1
     fi
-
-    unset symbol
-    unset symbollib
-    unset symboldir
 }
 
 #_____________________________________________________________________
@@ -504,6 +536,7 @@ check_algorithms() {
 
 #_____________________________________________________________________
 check_models() {
+    checking_msg "models"
     models=`echo $MODELS | tr ',' ' '`
     MODELS=""
     for a in ${models}; do
@@ -516,9 +549,10 @@ check_models() {
                     MODELS="$MODELS models/$a"
                     continue
                 else
+                    result "not ok"
                     message "Error: model directory \"$BASEDIR/models/$a\" does not exist!"
-                    message "Please create the directory and put a model file in it."
-                    message "You can use \`./createmodel --models=<model>' to create one."
+                    message "   Please create the directory and put a model file in it."
+                    message "   You can use \`./createmodel --models=<model>' to create one."
                     exit 1
                 fi ;;
         esac
@@ -527,11 +561,35 @@ check_models() {
     # test model dependencies (SoftsusyNMSSM depends on SoftsusyMSSM)
     if contains "${MODELS}" "models/SoftsusyNMSSM"; then
         if contains_not "${MODELS}" "models/SoftsusyMSSM"; then
-            message "Error: model SoftsusyNMSSM requires model SoftsusyMSSM"
-            message "Please also select the SoftsusyMSSM"
+            result "not ok"
+            message "Error: model SoftsusyNMSSM requires model SoftsusyMSSM !"
+            message "   Please select the model SoftsusyMSSM as well:"
+            message "   --with-models=SoftsusyMSSM,SoftsusyNMSSM"
             exit 1
         fi
     fi
+
+    # check for Makefile module, start script and FlexibleSUSY model
+    # file
+    for m in ${MODELS}; do
+        if ! test -r ${m}/module.mk; then
+            result "not ok"
+            message "Error: No Makefile module found in ${m}"
+            message "   Please create ${m}/module.mk !"
+            exit 1
+        fi
+        if ! test -r ${m}/start.m; then
+            logmsg ""
+            logmsg "Note: No start script not found in ${m}"
+        fi
+        if ! test -r ${m}/FlexibleSUSY.m; then
+            logmsg ""
+            logmsg "Note: No FlexibleSUSY model file found in ${m}"
+        fi
+    done
+
+    result "ok"
+    logmsg "   Models: ${MODELS}"
 }
 
 #_____________________________________________________________________
@@ -562,7 +620,27 @@ check_addons() {
 #_____________________________________________________________________
 check_platform() {
     # checks which platform we have
-    linuxdist=""
+
+    logmsg "# Platform information"
+    logmsg ""
+    logmsg "hostname = `(hostname || uname -n) 2>/dev/null | sed 1q`"
+    logmsg "uname -m = `(uname -m) 2>/dev/null || echo unknown`"
+    logmsg "uname -r = `(uname -r) 2>/dev/null || echo unknown`"
+    logmsg "uname -s = `(uname -s) 2>/dev/null || echo unknown`"
+    logmsg "uname -v = `(uname -v) 2>/dev/null || echo unknown`"
+    logmsg "Machine word size: ${machine_word_size}"
+    logmsg ""
+
+    local _paths="`echo $PATH | tr ':' ' '`"
+    for p in ${_paths}; do
+        logmsg "PATH: ${p}"
+    done
+    logmsg ""
+}
+
+#_____________________________________________________________________
+check_multiarch() {
+    local linuxdist=""
     debmultiarch=""
 
     exists_in_path "lsb_release"
@@ -584,6 +662,91 @@ check_platform() {
             exit 1
         fi
     fi
+}
+
+#_____________________________________________________________________
+check_boost() {
+    check_header "boost/version.hpp" "$boost_inc_dir" \
+	"$default_inc_paths"
+    if test "x$found_hdr" = "x" ; then
+        message "Error: could not find boost/version.hpp in ${boost_inc_dir} ${default_inc_paths}"
+        message "   Boost ${required_boost_version} or higher must be installed,"
+        message "   see http://www.boost.org"
+        exit 1
+    else
+        # assume that the compiler will look in the default paths
+        if [ -n "$boost_inc_dir" ]; then
+            BOOSTFLAGS="-I$boost_inc_dir"
+        fi
+    fi
+}
+
+#_____________________________________________________________________
+check_boost_version() {
+    checking_msg "boost version"
+
+    local _check_boost_version_progr_cpp="${BASEDIR}/check_boost_version.cpp"
+    local _check_boost_version_progr_exe="${BASEDIR}/check_boost_version.x"
+
+    # clean up
+    rm -f ${_check_boost_version_progr_cpp} ${_check_boost_version_progr_exe}
+    rm -f ${boostconfig}
+
+    cat <<EOF > ${_check_boost_version_progr_cpp}
+#include <fstream>
+#include <boost/version.hpp>
+int main() {
+   int boost_major = BOOST_VERSION / 100000;
+   int boost_minor = BOOST_VERSION / 100 % 1000;
+   int boost_patch = BOOST_VERSION % 100;
+   int error = 0;
+
+   if (boost_major < ${required_boost_major})
+      error = 1;
+   else if (boost_minor < ${required_boost_minor})
+      error = 2;
+   else if (boost_patch < ${required_boost_patch})
+      error = 3;
+
+   std::ofstream ostr("${boostconfig}");
+   if (ostr.good()) {
+      ostr << boost_major << '.' << boost_minor << '.'
+           << boost_patch;
+   }
+   ostr.close();
+
+   return error;
+}
+EOF
+    # compile the version check program
+    if $CXX -o ${_check_boost_version_progr_exe} ${BOOSTFLAGS} ${_check_boost_version_progr_cpp} >> ${logfile} 2>&1;
+    then
+        # run the version check program
+        ${_check_boost_version_progr_exe}
+        local _error="$?"
+        local boost_version=""
+        if test -r "${boostconfig}" ; then
+            boost_version=`cat ${boostconfig}`
+        fi
+        if test "x${_error}" = "x0" ; then
+            result "ok (version ${boost_version})"
+            logmsg "   Required boost version: ${required_boost_version}"
+            logmsg "   Boost version found: ${boost_version}"
+        else
+            result "not ok (version ${boost_version})"
+            message "Error: the installed boost version is too old."
+            message "   Please install version ${required_boost_version} or higher."
+            rm -f ${_check_boost_version_progr_cpp} ${_check_boost_version_progr_exe}
+            exit 1
+        fi
+    else
+        result "unknown"
+        message "Warning: could not determine boost version because"
+        message "   compilation of the boost test program failed."
+    fi
+
+    # clean up
+    rm -f ${_check_boost_version_progr_cpp} ${_check_boost_version_progr_exe}
 }
 
 #_____________________________________________________________________
@@ -611,11 +774,6 @@ check_boost_test_incl() {
     if test "x$found_hdr" = "x" ; then
         message "Warning: boost/test/unit_test.hpp must be installed"
         message "  to compile and run the tests, see http://www.boost.org"
-    else
-        # assume that the compiler will look in the default paths
-        if [ -n "$boost_inc_dir" ]; then
-            BOOSTFLAGS="-I$boost_inc_dir"
-        fi
     fi
 }
 
@@ -641,16 +799,6 @@ check_boost_thread_libs() {
     fi
     BOOSTTHREADLIBS_="$BOOSTTHREADLIBS_ "-l$(
 	echo "$found_lib" | sed 's/^lib\(.*\)\..*$/\1/')
-
-    check_library "libpthread" "" "$default_lib_paths"
-    if [ -z "$found_lib" ]; then
-        message "Error: libpthread must be installed to enable multithreading"
-        message "  in the lattice method.  You can disable the lattice method"
-        message "  with the --with-algorithms= flag."
-        exit 1
-    fi
-    BOOSTTHREADLIBS_="$BOOSTTHREADLIBS_ "-l$(
-        echo "$found_lib" | sed 's/^lib\(.*\)\..*$/\1/')
 
     if [ -z "$boost_lib_dir" ]; then
         # assume that the linker will look in the default paths
@@ -678,15 +826,154 @@ check_boost_thread_incl() {
 }
 
 #_____________________________________________________________________
+check_thread_libs() {
+    check_library "libpthread" "" "$default_lib_paths"
+    if [ -z "$found_lib" ]; then
+        message "Error: libpthread must be installed to enable multithreading!"
+        exit 1
+    fi
+    THREADLIBS=-l$(echo "$found_lib" | sed 's/^lib\(.*\)\..*$/\1/')
+}
+
+#_____________________________________________________________________
+is_gnu_cpp_compiler() {
+    checking_msg "${CXX} is GNU compiler"
+    local _check_gnu_compiler_cpp="${BASEDIR}/check_gnu_compiler.cpp"
+    local _check_gnu_compiler_exe="${BASEDIR}/check_gnu_compiler.x"
+    rm -f ${_check_gnu_compiler_cpp} ${_check_gnu_compiler_exe}
+
+    cat <<EOF > ${_check_gnu_compiler_cpp}
+int main() {
+#if defined(__llvm__) || defined(__clang__)
+   return 1;
+#else
+   #ifdef __GNUC__
+      return 0;
+   #else
+      return 1;
+   #endif
+#endif
+}
+EOF
+    local _result="1"
+
+    if $CXX -o ${_check_gnu_compiler_exe} ${_check_gnu_compiler_cpp} >> ${logfile} 2>&1;
+    then
+        # run the version check program
+        if ${_check_gnu_compiler_exe};
+        then
+            result "yes"
+            logmsg "   ${CXX} is a GNU compiler"
+            _result="0"
+        else
+            result "no"
+            _result="1"
+        fi
+    else
+        result "unknown"
+        message "Warning: could not determine compiler type of ${CXX} because"
+        message "   compilation of the test program failed."
+        _result="1"
+    fi
+
+    rm -f ${_check_gnu_compiler_cpp} ${_check_gnu_compiler_exe}
+    return "${_result}"
+}
+
+#_____________________________________________________________________
+check_gpp_version() {
+    local _check_gpp_version_progr_cpp="${BASEDIR}/check_gpp_version.cpp"
+    local _check_gpp_version_progr_exe="${BASEDIR}/check_gpp_version.x"
+
+    checking_msg "${CXX} compiler version >= ${required_gpp_version}"
+
+    # clean up
+    rm -f ${_check_gpp_version_progr_cpp} ${_check_gpp_version_progr_exe}
+    rm -f ${gppconfig}
+
+    cat <<EOF > ${_check_gpp_version_progr_cpp}
+#include <fstream>
+int main() {
+   int gpp_major = __GNUC__;
+   int gpp_minor = __GNUC_MINOR__;
+   int gpp_patch = __GNUC_PATCHLEVEL__;
+   int error = 0;
+
+   if (gpp_major < ${required_gpp_major})
+      error = 1;
+   else if (gpp_minor < ${required_gpp_minor})
+      error = 2;
+   else if (gpp_patch < ${required_gpp_patch})
+      error = 3;
+
+   std::ofstream ostr("${gppconfig}");
+   if (ostr.good()) {
+      ostr << gpp_major << '.' << gpp_minor << '.'
+           << gpp_patch;
+   }
+   ostr.close();
+
+   return error;
+}
+EOF
+    # compile the version check program
+    if $CXX -o ${_check_gpp_version_progr_exe} ${_check_gpp_version_progr_cpp} >> ${logfile} 2>&1;
+    then
+        # run the version check program
+        ${_check_gpp_version_progr_exe}
+        local _error="$?"
+        local gpp_version=""
+        if test -r "${gppconfig}" ; then
+            gpp_version=`cat ${gppconfig}`
+        fi
+        if test "x${_error}" = "x0" ; then
+            result "ok (version ${gpp_version})"
+            logmsg "   Required ${CXX} version: ${required_gpp_version}"
+            logmsg "   ${CXX} version found: ${gpp_version}"
+        else
+            result "not ok (version ${gpp_version})"
+            message "Error: the installed ${CXX} version is too old."
+            message "   Please install version ${required_gpp_version} or higher."
+            rm -f ${_check_gpp_version_progr_cpp} ${_check_gpp_version_progr_exe}
+            rm -f ${gppconfig}
+            exit 1
+        fi
+    else
+        result "unknown"
+        message "Warning: could not determine ${CXX} version because"
+        message "   compilation of the ${CXX} test program failed."
+    fi
+
+    # clean up
+    rm -f ${_check_gpp_version_progr_cpp} ${_check_gpp_version_progr_exe}
+    rm -f ${gppconfig}
+}
+
+#_____________________________________________________________________
 check_cxx() {
     checking_msg "C++ compiler $CXX"
     exists_in_path "$CXX"
     if [ -z "$cmd" ] ; then
         result "not found"
         message "Error: A C++ compiler must be installed to compile the models!"
+        message "   Use --with-cxx= to specify the C++ compiler to be used."
         exit 1
     else
         result "found $cmd"
+    fi
+}
+
+#_____________________________________________________________________
+check_cxxflags() {
+    if test "x$enable_static_libs" = "xno" ; then
+        # check if -fPIC is in CXXFLAGS
+        case "${CXX}" in
+            g++*|clang++*)
+                if contains_not "${CXXFLAGS}" "-fPIC" ; then
+                    message "   Warning: could not find -fPIC in CXXFLAGS, appending it"
+                    CXXFLAGS="${CXXFLAGS} -fPIC"
+                fi ;;
+        esac
     fi
 }
 
@@ -726,11 +1013,26 @@ check_fc() {
     exists_in_path "$FC"
     if [ -z "$cmd" ] ; then
         result "not found"
-        message "Error: A Fortran compiler must be installed to compile the\
- two-loop MSSM Higgs contributions"
+        message "Error: A Fortran compiler must be installed to compile the"
+        message "   two-loop MSSM Higgs contributions!"
+        message "   Use --with-fc= to specify the Fortran compiler to be used."
         exit 1
     else
         result "found $cmd"
+    fi
+}
+
+#_____________________________________________________________________
+check_fflags() {
+    if test "x$enable_static_libs" = "xno" ; then
+        # check if -fPIC is in FFLAGS
+        case "${FC}" in
+            gfortran*)
+                if contains_not "${FFLAGS}" "-fPIC" ; then
+                    message "   Warning: could not find -fPIC in FFLAGS, appending it"
+                    FFLAGS="${FFLAGS} -fPIC"
+                fi ;;
+        esac
     fi
 }
 
@@ -814,8 +1116,7 @@ find_symbol_using_pkgconfig() {
     local pkg
     local ldpaths
     local libnames
-    symbol="$1"
-    pkg="$2"
+    pkg="$1"
     linker_flags=""
     type pkg-config > /dev/null 2>&1 || {
 	logmsg "pkg-config not found"
@@ -827,21 +1128,25 @@ find_symbol_using_pkgconfig() {
     }
     ldpaths=$(pkg-config --libs-only-L "$pkg")
     libnames=$(pkg-config --libs-only-l "$pkg")
-    for dopt in $default_lib_paths $ldpaths; do
-	for lopt in $libnames; do
-	    if check_symbol "$symbol" "$lopt" "$dopt"; then
-		logmsg "found $symbol in $dopt $lopt"
-		linker_flags=$(pkg-config --libs "$pkg")
-		return 0
-	    fi
+    shift
+    for symbol; do
+	for dopt in $default_lib_paths $ldpaths; do
+	    for lopt in $libnames; do
+		if check_symbol "$symbol" "$lopt" "$dopt"; then
+		    logmsg "found $symbol in $dopt $lopt"
+		    linker_flags=$(pkg-config --libs "$pkg")
+		    continue 3
+		fi
+	    done
 	done
+	return 1
     done
-    return 1
+    return 0
 }
 
 #_____________________________________________________________________
 check_lapack_libs() {
-    if find_symbol_using_pkgconfig dgbsv_ lapack; then
+    if find_symbol_using_pkgconfig lapack dgbsv_; then
 	LAPACKLIBS="$linker_flags"
     else
 	check_lapack_libs_using_options
@@ -867,6 +1172,7 @@ check_makelib() {
     if [ -z "$cmd" ] ; then
         result "not found"
         message "Error: A program which builds libraries must be installed!"
+        message "   Use --with-make-lib-cmd= to specify the library creator program to be used."
         exit 1
     else
         result "found $cmd"
@@ -883,6 +1189,63 @@ check_math_cmd() {
         exit 1
     else
         result "found $cmd"
+    fi
+}
+
+#_____________________________________________________________________
+check_mathematica_version() {
+    local _math_version_check_progr="${BASEDIR}/check_math_version.m"
+    rm -f ${mathconfig} ${_math_version_check_progr}
+    cat <<EOF > ${_math_version_check_progr}
+error = 0;
+Put[\$VersionNumber, "${mathconfig}"];
+If[\$VersionNumber < ${required_mathematica_version},
+   error = 1;
+  ];
+Quit[error];
+EOF
+
+    checking_msg "Mathematica version >= ${required_mathematica_version}"
+    if $MATH -run "Get[\"${_math_version_check_progr}\"]" > /dev/null 2>&1;
+    then
+        if test -r "${mathconfig}" ; then
+            local math_version=`cat ${mathconfig}`
+            result "ok (version ${math_version})"
+        else
+            result "ok"
+        fi
+    else
+        result "not ok"
+        message "Error: Mathematica ${required_mathematica_version} or higher needs to be installed!"
+        rm -f ${_math_version_check_progr}
+        exit 1
+    fi
+    rm -f ${_math_version_check_progr}
+}
+
+#_____________________________________________________________________
+check_sarah() {
+    checking_msg "SARAH installation"
+    rm -f ${sarahconfig}
+    $MATH <<EOF > /dev/null
+Needs["SARAH\`"];
+If[!ValueQ[SA\`Version], Quit[1]];
+Export["${sarahconfig}", SA\`Version, "String"];
+Quit[0];
+EOF
+    local _sarah_is_available="$?"
+    if test "x${_sarah_is_available}" = "x0" ; then
+        if test -r "${sarahconfig}" ; then
+            local sarah_version=`cat ${sarahconfig}`
+            result "ok (version ${sarah_version})"
+        else
+            result "ok"
+        fi
+    else
+        result "not ok"
+        message "Error: SARAH is not installed correctly."
+        message "   Please make sure Needs[\"SARAH\`\"] works correctly."
+        exit 1
     fi
 }
 
@@ -916,19 +1279,6 @@ enable_defines() {
     fi
 
     if test "x$enable_static_libs" = "xno" ; then
-        # check if -fPIC is in CXXFLAGS and FFLAGS
-        if test "x$CXX" = "xg++" -o "x$CXX" = "xclang++" ; then
-            if contains_not "$CXXFLAGS" "-fPIC" ; then
-                message "  Warning: could not find -fPIC in CXXFLAGS, appending it"
-                CXXFLAGS="$CXXFLAGS -fPIC"
-            fi
-        fi
-        if test "x$FC" = "xgfortran" ; then
-            if contains_not "$FFLAGS" "-fPIC" ; then
-                message "  Warning: could not find -fPIC in FFLAGS, appending it"
-                FFLAGS="$FFLAGS -fPIC"
-            fi
-        fi
         # check the library extension
         if test "x$LIBEXT" = "x.a" ; then
             message "  Warning: library extension $LIBEXT is reserved for static libraries."
@@ -959,8 +1309,10 @@ Options:
 enable/disable options, prefix with either --enable- or --disable-
 
   colors            Colored output (default: $enable_colors)
+  compile           Compile the source code (default: $enable_compile)
   debug             Debug messages and assertions (no default)
   looptools         Use LoopTools to compute the loop functions (default: $enable_looptools)
+  meta              Create model classes (default: $enable_meta)
   silent            Suppress all command line output (default: $enable_silent)
   static-libs       Create static libraries (default: $enable_static_libs)
   verbose           Verbose messages (default: $enable_verbose)
@@ -996,7 +1348,7 @@ EOF
 #_____________________________________________________________________
 version() {
 cat <<EOF
-$PROGRAM_NAME $PROGRAM_VERSION
+$PROGRAM_NAME $FLEXIBLESUSY_VERSION
 $PROGRAM_NAME is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -1080,34 +1432,54 @@ if test $# -gt 0 ; then
     done
 fi
 
+check_algorithms
 guess_machine_word_size
 check_platform
 
-check_algorithms
-check_boost_test_incl
-check_boost_test_libs
-check_cxx
-check_fc
-check_eigen_incl
-check_fortran_libs
-check_gsl_config
-if use_algorithm "lattice"; then
-    check_boost_thread_incl
-    check_boost_thread_libs
-    check_lapack_libs
+if test "x${enable_compile}" = "xyes"; then
+    check_multiarch
+    check_cxx
+    if is_gnu_cpp_compiler; then
+        check_gpp_version
+    fi
+    check_cxxflags
+    check_fc
+    check_fflags
+    check_boost
+    check_boost_version
+    check_boost_test_incl
+    check_boost_test_libs
+    check_eigen_incl
+    check_fortran_libs
+    check_gsl_config
+    if use_algorithm "lattice"; then
+        check_boost_thread_incl
+        check_boost_thread_libs
+        check_lapack_libs
+    fi
+    if test "x$enable_looptools" = "xyes"; then
+        check_looptools_incl
+        check_looptools_libs
+    fi
+    check_makelib
+    check_thread_libs
 fi
-if test "x$enable_looptools" = "xyes"; then
-    check_looptools_incl
-    check_looptools_libs
+
+if test "x${enable_meta}" = "xyes"; then
+    check_math_cmd
+    check_mathematica_version
+    check_sarah
 fi
-check_makelib
-check_math_cmd
+
 check_models
 check_addons
 
 enable_defines
 
-sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
+sed -e "s|@FLEXIBLESUSY_VERSION@|$FLEXIBLESUSY_VERSION|" \
+    -e "s|@FLEXIBLESUSY_MAJOR@|$FLEXIBLESUSY_MAJOR|" \
+    -e "s|@FLEXIBLESUSY_MINOR@|$FLEXIBLESUSY_MINOR|" \
+    -e "s|@FLEXIBLESUSY_PATCH@|$FLEXIBLESUSY_PATCH|" \
     -e "s|@PKGNAME@|$PROGRAM_NAME|"    \
     -e "s|@ABSBASEDIR@|$ABSBASEDIR|"   \
     -e "s|@ADDONS@|$ADDONS|"           \
@@ -1115,6 +1487,7 @@ sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
     -e "s|@BOOSTTESTLIBS@|$BOOSTTESTLIBS|"     \
     -e "s|@BOOSTTHREADLIBS@|$BOOSTTHREADLIBS|"     \
     -e "s|@BOOSTFLAGS@|$BOOSTFLAGS|"   \
+    -e "s|@THREADLIBS@|$THREADLIBS|"   \
     -e "s|@CPPFLAGS@|$CPPFLAGS|"       \
     -e "s|@CXXFLAGS@|$CXXFLAGS|"       \
     -e "s|@CXX@|$CXX|"                 \
@@ -1126,7 +1499,9 @@ sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
     -e "s|@GSLLIBS@|$GSLLIBS|"         \
     -e "s|@GSLFLAGS@|$GSLFLAGS|"       \
     -e "s|@LAPACKLIBS@|$LAPACKLIBS|"   \
+    -e "s|@ENABLE_COMPILE@|$enable_compile|" \
     -e "s|@ENABLE_LOOPTOOLS@|$enable_looptools|" \
+    -e "s|@ENABLE_META@|$enable_meta|" \
     -e "s|@LOOPTOOLSLIBS@|$LOOPTOOLSLIBS|"    \
     -e "s|@LOOPTOOLSFLAGS@|$LOOPTOOLSFLAGS|"  \
     -e "s|@MODELS@|$MODELS|"           \
@@ -1136,7 +1511,10 @@ sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
     -e "s|@LIBEXT@|$LIBEXT|"           \
     < $MAKEFILE_TMPL > $MAKEFILE
 
-sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
+sed -e "s|@FLEXIBLESUSY_VERSION@|$FLEXIBLESUSY_VERSION|" \
+    -e "s|@FLEXIBLESUSY_MAJOR@|$FLEXIBLESUSY_MAJOR|" \
+    -e "s|@FLEXIBLESUSY_MINOR@|$FLEXIBLESUSY_MINOR|" \
+    -e "s|@FLEXIBLESUSY_PATCH@|$FLEXIBLESUSY_PATCH|" \
     -e "s|@PKGNAME@|$PROGRAM_NAME|"    \
     -e "s|@ADDONS@|$ADDONS|"           \
     -e "s|@CPPFLAGS@|$CPPFLAGS|"       \
@@ -1148,12 +1526,23 @@ sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
     -e "s|@MAKELIB@|$MAKELIB|"         \
     -e "s|@MATH@|$MATH|"               \
     -e "s|@MODELS@|$MODELS|"           \
+    -e "s|@THREADLIBS@|$THREADLIBS|"   \
     < $FSCONFIG_TMPL > $FSCONFIG
 
-sed -e "s|@VERSION@|$PROGRAM_VERSION|" \
+sed -e "s|@FLEXIBLESUSY_VERSION@|$FLEXIBLESUSY_VERSION|" \
+    -e "s|@FLEXIBLESUSY_MAJOR@|$FLEXIBLESUSY_MAJOR|" \
+    -e "s|@FLEXIBLESUSY_MINOR@|$FLEXIBLESUSY_MINOR|" \
+    -e "s|@FLEXIBLESUSY_PATCH@|$FLEXIBLESUSY_PATCH|" \
     -e "s|@PKGNAME@|$PROGRAM_NAME|"    \
     < $CONFIGHDR_TMPL > $CONFIGHDR
 
-echo "$PROGRAM_VERSION" > $BASEDIR/config/version
+sed -e "s|@FLEXIBLESUSY_VERSION@|$FLEXIBLESUSY_VERSION|" \
+    -e "s|@FLEXIBLESUSY_MAJOR@|$FLEXIBLESUSY_MAJOR|" \
+    -e "s|@FLEXIBLESUSY_MINOR@|$FLEXIBLESUSY_MINOR|" \
+    -e "s|@FLEXIBLESUSY_PATCH@|$FLEXIBLESUSY_PATCH|" \
+    -e "s|@PKGNAME@|$PROGRAM_NAME|"    \
+    < $TEXVERSION_TMPL > $TEXVERSION
+
+echo "$FLEXIBLESUSY_VERSION" > $BASEDIR/config/version
 
 chmod a+x $FSCONFIG
