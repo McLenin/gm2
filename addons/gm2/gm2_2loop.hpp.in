@@ -37,7 +37,19 @@ class Two_scale;
 namespace gm2 {
 
 double tan_beta_cor(const MSSM_gm2_wrapper&);
-double Deltag1 (const MSSM_gm2_wrapper&);
+
+double Deltag1(const MSSM_gm2_wrapper&);
+double DeltaYukHiggsino(const MSSM_gm2_wrapper&);
+double DeltaYukBinoHiggsino(const MSSM_gm2_wrapper&);
+double Deltag2(const MSSM_gm2_wrapper&);
+double DeltaYukWinoHiggsino(const MSSM_gm2_wrapper&);
+double DeltaTanBeta(const MSSM_gm2_wrapper&);
+
+double amuWHnu2L(const MSSM_gm2_wrapper&);
+double amuWHmuL2L(const MSSM_gm2_wrapper&);
+double amuBHmuL2L(const MSSM_gm2_wrapper&);
+double amuBHmuR2L(const MSSM_gm2_wrapper&);
+double amuBmuLmuR2L(const MSSM_gm2_wrapper&);
 
 } // namespace gm2
 } // namespace flexiblesusy
