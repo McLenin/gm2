@@ -10,17 +10,26 @@ LIBGM2_SRC := \
 LIBGM2_EXE_SRC := \
 		$(DIR)/gm2.cpp
 
+LIBGM2_TEST_SRC := \
+		$(DIR)/test_gm2_1loop.cpp
+
 LIBGM2_OBJ := \
 		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_SRC)))
 
 LIBGM2_EXE_OBJ := \
 		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_EXE_SRC)))
 
+LIBGM2_TEST_OBJ := \
+		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_TEST_SRC)))
+
 LIBGM2_DEP := \
 		$(LIBGM2_OBJ:.o=.d)
 
 LIBGM2_EXE_DEP := \
 		$(LIBGM2_EXE_OBJ:.o=.d)
+
+LIBGM2_TEST_DEP := \
+		$(LIBGM2_TEST_OBJ:.o=.d)
 
 LIBGM2     := $(DIR)/$(MODNAME)$(LIBEXT)
 
@@ -39,19 +48,22 @@ LIBGM2_TEMPLATES := \
                 $(DIR)/test_gm2_1loop.cpp.in \
                 $(DIR)/test_gm2_1loop.hpp.in
 
-GM2_EXE    := $(DIR)/gm2.x
+GM2_EXE    := \
+		$(patsubst %.cpp, %.x, $(filter %.cpp, $(LIBGM2_EXE_SRC)))
 
-GM2_TEST_EXE := $(DIR)/test_gm2_1loop.x
+GM2_TEST_EXE := \
+		$(patsubst %.cpp, %.x, $(filter %.cpp, $(LIBGM2_TEST_SRC)))
 
 .PHONY:         all-$(MODNAME) clean-$(MODNAME) distclean-$(MODNAME)
 
 all-$(MODNAME): $(LIBGM2)
 
 clean-$(MODNAME):
-		rm -rf $(LIBGM2_OBJ)
+		rm -rf $(LIBGM2_OBJ) $(LIBGM2_EXE_OBJ) $(LIBGM2_TEST_OBJ)
 
 distclean-$(MODNAME): clean-$(MODNAME)
-		rm -rf $(LIBGM2_DEP)
+		rm -rf $(LIBGM2_DEP) $(LIBGM2_EXE_DEP) $(LIBGM2_TEST_DEP)
+		rm -rf $(GM2_EXE) $(GM2_TEST_EXE)
 		rm -rf $(LIBGM2)
 
 clean::         clean-$(MODNAME)
@@ -75,15 +87,15 @@ $(LIBGM2_DEP) $(LIBGM2_OBJ) $(DIR)/gm2.o: CPPFLAGS += $(EIGENFLAGS)
 $(LIBGM2): $(LIBGM2_OBJ)
 		$(MAKELIB) $@ $^
 
-$(GM2_EXE): $(DIR)/gm2.o $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
+$(GM2_EXE): $(LIBGM2_EXE_OBJ) $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
 		$(CXX) -o $@ $(abspath $^) $(THREADLIBS) $(GSLLIBS) $(FLIBS)
 
-$(GM2_TEST_EXE): $(DIR)/test_gm2_1loop.o $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(abspath $^) $(GSLLIBS) $(FLIBS)
+$(GM2_TEST_EXE): $(LIBGM2_TEST_OBJ) $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
+		$(CXX) -o $@ $(abspath $^) $(THREADLIBS) $(GSLLIBS) $(FLIBS)
 
 # add boost and eigen flags for the test object files and dependencies
 $(GM2_TEST_EXE): CPPFLAGS += $(BOOSTFLAGS) $(EIGENFLAGS)
 
-ALLDEP += $(LIBGM2_DEP) $(LIBGM2_EXE_DEP)
+ALLDEP += $(LIBGM2_DEP) $(LIBGM2_EXE_DEP) $(LIBGM2_TEST_DEP)
 ALLLIB += $(LIBGM2)
 ALLEXE += $(GM2_EXE) $(GM2_TEST_EXE)
