@@ -122,6 +122,10 @@ void setup(MSSM_gm2_wrapper& model)
    model.calculate_DRbar_parameters();
 }
 
+} // gm2
+} // flexiblesusy
+using namespace flexiblesusy;
+using namespace gm2;
 
 int main() {
    MSSM_gm2_wrapper model;
@@ -157,17 +161,15 @@ int main() {
    double amuChipm_ = amuChipm(model);
    double amuChi0_ = amuChi0(model);
 
-   TEST_CLOSE(amuBHmuL_, 4.49377 * pow(10, -11), pow(10, -5));
-   TEST_CLOSE(amuBmuLmuR_, 4.47529 * pow(10, -10), pow(10, -5));
-   TEST_CLOSE(amuWHnu_, 6.84846 * pow(10, -10), pow(10, -5));
-   TEST_CLOSE(amuWHmuL_, -1.42674 * pow(10, -10), pow(10, -5));
-   TEST_CLOSE(amuBHmuR_, -1.73981 * pow(10, -10), pow(10, -5));
+   TEST_CLOSE(amuBHmuL_, 4.49377e-11, 1.e-5);
+   TEST_CLOSE(amuBmuLmuR_, 4.47529e-10, 1.e-5);
+   TEST_CLOSE(amuWHnu_, 6.84846e-10, 1.e-5);
+   TEST_CLOSE(amuWHmuL_, -1.42674e-10, 1.e-5);
+   TEST_CLOSE(amuBHmuR_, -1.73981e-10, 1.e-5);
 
-   TEST_CLOSE(amuChi0_, 1.40498 * pow(10, -10), pow(10, -5));
-   TEST_CLOSE(amuChipm_, 6.85139 * pow(10, -10), pow(10, -5));
+   TEST_CLOSE(amuChi0_, 1.40498e-10, 1.e-5);
+   TEST_CLOSE(amuChipm_, 6.85139e-10, 1.e-5);
 
    return gErrors;
 }
 
-} // gm2
-} // flexiblesusy
