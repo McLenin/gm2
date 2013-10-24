@@ -23,7 +23,6 @@
 #include "linalg.h"
 #include "logger.hpp"
 #include "wrappers.hpp"
-#include "MSSM_gm2_wrapper.hpp"
 #include <complex.h>
 
 namespace flexiblesusy {
@@ -86,7 +85,113 @@ double DeltaYukHiggsino(const MSSM_gm2_wrapper& model) {
    return ( oneOver16PiSqr * 0.5
             * (3. * sqr(ytop) * log(mu2(2, 2) / LogScale)
              + 3. * sqr(ybot) * log(md2(2, 2) / LogScale)
-             + 3. * (sqr(ytop) + sqr(ybot)) * log(mq2(2, 2) / LogScale)) );
+             + 3. * (sqr(ytop) + sqr(ybot)) * log(mq2(2, 2) / LogScale)
+             + sqr(ytau) * (log(me2(2, 2) / LogScale) + log(ml2(2, 2) / LogScale))) );
+}
+
+double DeltaYukBinoHiggsino(const MSSM_gm2_wrapper& model) {
+   double LogScale = fabs(model.get_MassB());
+   double ytop = model.get_Yu()(2, 2);
+   Eigen::Matrix<double,3,3> mu2(model.get_mu2());
+   Eigen::Matrix<double,3,3> mq2(model.get_mq2());
+
+   return ( oneOver16PiSqr * ( - 8. * sqr(ytop) * log(mu2(2, 2) / LogScale)
+                            + 2. * log(mq2(2, 2) / LogScale)) );
+}
+
+double Deltag2(const MSSM_gm2_wrapper& model) {
+   double g2 = model.get_g2();
+   double LogScale = fabs(model.get_MassB());
+   Eigen::Matrix<double,3,3> mq2(model.get_mq2());
+   Eigen::Matrix<double,3,3> ml2(model.get_ml2());
+
+   return ( sqr(g2) * oneOver16PiSqr * 4. / 3.
+            * (3. * log(mq2(0, 0) / LogScale) + 3. / 2. * log(mq2(2, 2) / LogScale)
+             + 0.5 * log(ml2(2, 2) / LogScale)) );
+}
+
+double DeltaYukWinoHiggsino(const MSSM_gm2_wrapper& model) {
+   double LogScale = fabs(model.get_MassB());
+   double ytop = model.get_Yu()(2, 2);
+   Eigen::Matrix<double,3,3> mq2(model.get_mq2());
+
+   return oneOver16PiSqr * - 6. * sqr(ytop) * log(mq2(2, 2) / LogScale);
+}
+
+double DeltaTanBeta(const MSSM_gm2_wrapper& model) {
+   double LogScale = fabs(model.get_MassB());
+   double ytau = model.get_Ye()(2, 2);
+   double ytop = model.get_Yu()(2, 2);
+   double ybot = model.get_Yd()(2, 2);
+   double MUDIM2 = 1.;
+
+   return - oneOver16PiSqr * (sqr(ytau) + sqr(ytop) + sqr(ybot)) * log(MUDIM2 / LogScale);
+}
+
+double amuWHnu2L(const MSSM_gm2_wrapper& model) {
+   double g2 = model.get_g2();
+   double MM = model.get_MFe()(2);
+   double M2 = model.get_MassWB();
+   double TB = model.get_vu() / model.get_vd();
+   double mu = model.get_Mu();
+   DoubleVector MSv = model.get_MSv();
+
+   return ( sqr(g2) * 2. * oneOver16PiSqr  * sqr(MM) * M2 * mu * TB
+           / sqr(sqr(MSv(2))) * Fa(sqr(M2 / MSv(2)), sqr(mu / MSv(2)))
+           /* * (test 1??? + ganz viele deltas)*/ );
+}
+
+double amuWHmuL2L(const MSSM_gm2_wrapper& model) {
+   double g2 = model.get_g2();
+   double MM = model.get_MFe()(2);
+   double M2 = model.get_MassWB();
+   double TB = model.get_vu() / model.get_vd();
+   double mu = model.get_Mu();
+   Eigen::Matrix<double,3,3> ml2 = model.get_ml2();
+
+   return  ( - sqr(g2) * oneOver16PiSqr * sqr(MM) * M2 * mu * TB
+            / sqr(sqr(ml2(1, 1))) * Fb(sqr(M2 / ml2(1, 1)), sqr(mu / ml2(1, 1)))
+            /* * (test2 + ganz viele deltas) */ );
+}
+
+double amuBHmuL2L(const MSSM_gm2_wrapper& model) {
+   double gY = model.get_g1() * sqrt(3. / 5.);
+   double MM = model.get_MFe()(2);
+   double M1 = model.get_MassB();
+   double TB = model.get_vu() / model.get_vd();
+   double mu = model.get_Mu();
+   Eigen::Matrix<double,3,3> ml2 = model.get_ml2();
+
+   return ( sqr(gY) * oneOver16PiSqr * sqr(MM) * M1 * TB * mu
+           / sqr(sqr(ml2(1, 1))) * Fb(sqr(M1 / ml2(1, 1)), sqr(mu / ml2(1, 1)))
+           /* * (test3 + ganz viele deltas) */ );
+}
+
+double amuBHmuR2L(const MSSM_gm2_wrapper& model) {
+   double gY = model.get_g1() * sqrt(3. / 5.);
+   double MM = model.get_MFe()(2);
+   double M1 = model.get_MassB();
+   double TB = model.get_vu() / model.get_vd();
+   double mu = model.get_Mu();
+   Eigen::Matrix<double,3,3> me2 = model.get_me2();
+
+   return ( - sqr(gY) * 2. * oneOver16PiSqr * sqr(MM) * M1 * TB * mu
+           / sqr(sqr(me2(1, 1))) * Fb(sqr(M1 / me2(1, 1)), sqr(mu / me2(1, 1)))
+           /* * (test4 + ganz viele deltas) */ );
+}
+
+double amuBmuLmuR2L(const MSSM_gm2_wrapper& model) {
+   double gY = model.get_g1() * sqrt(3. / 5.);
+   double MM = model.get_MFe()(2);
+   double M1 = model.get_MassB();
+   double TB = model.get_vu() / model.get_vd();
+   double mu = model.get_Mu();
+   Eigen::Matrix<double,3,3> me2 = model.get_me2();
+   Eigen::Matrix<double,3,3> ml2 = model.get_ml2();
+
+   return ( sqr(gY) * 2. * oneOver16PiSqr * sqr(MM) * mu * TB
+           / (sqr(M1) * M1) * Fb(sqr(ml2(1, 1) / M1), sqr(me2(1, 1) / M1))
+           /* * (test5 + ganz viele deltas) */ );
 }
 
 } // namespace gm2
