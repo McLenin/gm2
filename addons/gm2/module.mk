@@ -3,15 +3,24 @@ MODNAME      := libgm2
 
 LIBGM2_SRC := \
 		$(DIR)/ffunctions.cpp \
-		$(DIR)/gm2.cpp \
 		$(DIR)/gm2_1loop.cpp \
+		$(DIR)/gm2_2loop.cpp \
                 $(DIR)/MSSM_gm2_wrapper.cpp
+
+LIBGM2_EXE_SRC := \
+		$(DIR)/gm2.cpp
 
 LIBGM2_OBJ := \
 		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_SRC)))
 
+LIBGM2_EXE_OBJ := \
+		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_EXE_SRC)))
+
 LIBGM2_DEP := \
 		$(LIBGM2_OBJ:.o=.d)
+
+LIBGM2_EXE_DEP := \
+		$(LIBGM2_EXE_OBJ:.o=.d)
 
 LIBGM2     := $(DIR)/$(MODNAME)$(LIBEXT)
 
@@ -23,6 +32,8 @@ LIBGM2_TEMPLATES := \
 		$(DIR)/gm2.hpp.in \
 		$(DIR)/gm2_1loop.cpp.in \
 		$(DIR)/gm2_1loop.hpp.in \
+		$(DIR)/gm2_2loop.cpp.in \
+		$(DIR)/gm2_2loop.hpp.in \
                 $(DIR)/MSSM_gm2_wrapper.cpp.in \
                 $(DIR)/MSSM_gm2_wrapper.hpp.in \
                 $(DIR)/test_gm2_1loop.cpp.in \
@@ -73,6 +84,6 @@ $(GM2_TEST_EXE): $(DIR)/test_gm2_1loop.o $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBL
 # add boost and eigen flags for the test object files and dependencies
 $(GM2_TEST_EXE): CPPFLAGS += $(BOOSTFLAGS) $(EIGENFLAGS)
 
-ALLDEP += $(LIBGM2_DEP)
+ALLDEP += $(LIBGM2_DEP) $(LIBGM2_EXE_DEP)
 ALLLIB += $(LIBGM2)
 ALLEXE += $(GM2_EXE) $(GM2_TEST_EXE)
