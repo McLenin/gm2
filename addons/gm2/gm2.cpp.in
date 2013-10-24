@@ -20,6 +20,7 @@
 
 #include "logger.hpp"
 #include "gm2_1loop.hpp"
+#include "gm2_2loop.hpp"
 #include "MSSM_gm2_wrapper.hpp"
 #include "wrappers.hpp"
 
@@ -164,6 +165,10 @@ int main()
    INFO("amuBHmuL = " << gm2::amuBHmuL(model));
    INFO("amuWHmuL = " << gm2::amuWHmuL(model));
    INFO("amuBHmuR = " << gm2::amuBHmuR(model));
+   INFO("--------------------------------------");
+   INFO("----- g-2 (2-loop) - corrections -----");
+   INFO("--------------------------------------");
+   INFO("TanBetaCorrectionFactor 1/(1 + Delta) = " << tan_beta_cor(model));
 
    return 0;
 }
