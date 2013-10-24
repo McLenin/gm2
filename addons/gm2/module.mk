@@ -76,7 +76,7 @@ $(LIBGM2): $(LIBGM2_OBJ)
 		$(MAKELIB) $@ $^
 
 $(GM2_EXE): $(DIR)/gm2.o $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(abspath $^) $(GSLLIBS) $(FLIBS)
+		$(CXX) -o $@ $(abspath $^) $(THREADLIBS) $(GSLLIBS) $(FLIBS)
 
 $(GM2_TEST_EXE): $(DIR)/test_gm2_1loop.o $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
 		$(CXX) -o $@ $(abspath $^) $(GSLLIBS) $(FLIBS)
