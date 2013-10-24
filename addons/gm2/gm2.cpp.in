@@ -169,6 +169,11 @@ int main()
    INFO("----- g-2 (2-loop) - corrections -----");
    INFO("--------------------------------------");
    INFO("TanBetaCorrectionFactor 1/(1 + Delta) = " << tan_beta_cor(model));
+   INFO("amuWHnu2L = " << amuWHnu2L(model));
+   INFO("amuWHmuL2L = " << amuWHmuL2L(model));
+   INFO("amuBHmuL2L = " << amuBHmuL2L(model));
+   INFO("amuBHmuR2L = " << amuBHmuR2L(model));
+   INFO("amuBmuLmuR2L = " << amuBmuLmuR2L(model));
 
    return 0;
 }
