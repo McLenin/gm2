@@ -71,7 +71,7 @@ double G4(double x) {
    return 1. / (2. * cube(x - 1.)) * ((x - 1.) * (x + 1.) - 2. * x * log(x));
 }
 
-double I(double a, double b, double c) {
+double Iabc(double a, double b, double c) {
 
    return ( (sqr(a * b) * log(sqr(a / b))
            + sqr(b * c) * log(sqr(b / c))
