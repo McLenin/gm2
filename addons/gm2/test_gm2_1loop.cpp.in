@@ -124,6 +124,7 @@ void setup(MSSM_gm2_wrapper& model)
 
 } // gm2
 } // flexiblesusy
+
 using namespace flexiblesusy;
 using namespace gm2;
 
