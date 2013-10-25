@@ -25,8 +25,12 @@ namespace gm2 {
 
    double F1C(double);
    double F2C(double);
+   double F3C(double);
+   double F4C(double);
    double F1N(double);
    double F2N(double);
+   double F3N(double);
+   double F4N(double);
    double Fa(double, double);
    double Fb(double, double);
    double G3(double);

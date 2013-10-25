@@ -18,6 +18,7 @@
 
 #include "ffunctions.hpp"
 #include <cmath>
+#include "src/numerics.h"
 
 namespace flexiblesusy {
 
@@ -40,6 +41,22 @@ double F2C(double x) {
    return 3. / (2. * cube(1. - x)) * (- 3. + 4. * x - sqr(x) - 2. * log(x));
 }
 
+double F3C(double x) {
+
+   return ( 4. / (141. * quad(1. - x)) * ((1. - x) * (151. * sqr(x) - 335. * x + 592.)
+             + 6. * (21. * cube(x) - 108. * sqr(x) - 93. * x + 50.) * log(x)
+             - 54. * x * (sqr(x) - 2. * x - 2.) * sqr(log(x))
+             - 108. * x * (sqr(x) - 2. * x + 12.) * dilog(1.- x)) );
+}
+
+double F4C(double x) {
+
+   return ( - 9. / (122. * cube(1. - x)) * (8. * (sqr(x) - 3. * x + 2.)
+             +  (11. * sqr(x) - 40. * x + 5.) * log(x)
+             - 2. * (sqr(x) - 2. * x - 2.) * sqr(log(x))
+             - 4. * (sqr(x) - 2. * x + 9.) * dilog(1.- x)) ); 
+}
+
 double F1N(double x) {
 
    return 2. / quad(1. - x) * (1. - 6. * x + 3. * sqr(x)
@@ -49,6 +66,19 @@ double F1N(double x) {
 double F2N(double x) {
 
    return 3. / cube(1. - x) * (1. - sqr(x) + 2. * x * log(x));
+}
+
+double F3N(double x) {
+
+   return 4. / (105. * quad(1. - x)) * ((1. - x) * (- 97. * sqr(x) - 529. * x + 2.)
+            + 6. * sqr(x) * (13. * x + 81.) * log(x)
+            + 108. * x * (7. * x + 4.) * dilog(1. - x));
+}
+
+double F4N(double x) {
+
+   return - 2.25 /cube(1. - x) * ((x + 3.) * (x * log(x) + x - 1.)
+                                  + (6. * x + 2.) * dilog(1. - x));
 }
 
 double Fa(double x, double y) {
