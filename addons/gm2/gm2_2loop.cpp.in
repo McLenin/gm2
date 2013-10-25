@@ -28,6 +28,8 @@
 namespace flexiblesusy {
 namespace gm2 {
 
+//tanbeta2 corrections
+
 double tan_beta_cor(const MSSM_gm2_wrapper& model) {
    double delta_mu;
    double mu = model.get_Mu();
@@ -54,6 +56,8 @@ double tan_beta_cor(const MSSM_gm2_wrapper& model) {
 
    return 1. / (1. + delta_mu);
 }
+
+// photonic corrections, log-approximations
 
 double Deltag1(const MSSM_gm2_wrapper& model) {
    double gY = model.get_g1() * sqrt(3. / 5.);
@@ -123,7 +127,7 @@ double DeltaTanBeta(const MSSM_gm2_wrapper& model) {
    double ytau = model.get_Ye()(2, 2);
    double ytop = model.get_Yu()(2, 2);
    double ybot = model.get_Yd()(2, 2);
-   double MUDIM2 = 1.;
+   double MUDIM2 = 1.;                              // ???
 
    return - oneOver16PiSqr * (sqr(ytau) + sqr(ytop) + sqr(ybot)) * log(MUDIM2 / LogScale);
 }
@@ -192,6 +196,56 @@ double amuBmuLmuR2L(const MSSM_gm2_wrapper& model) {
    return ( sqr(gY) * 2. * oneOver16PiSqr * sqr(MM) * mu * TB
            / (sqr(M1) * M1) * Fb(sqr(ml2(1, 1) / M1), sqr(me2(1, 1) / M1))
            /* * (test5 + ganz viele deltas) */ );
+}
+
+// photonic corrections, all
+
+double amuChipmPhotonic(const MSSM_gm2_wrapper& model) {
+   double result = 0.;
+   double MM = model.get_MFe()(2);
+   double alpha = 1./137.036;
+   DoubleVector AAC_(AAC(model));
+   DoubleVector BBC_(BBC(model));
+   DoubleVector MCha(model.get_MCha());
+   DoubleVector MSv(model.get_MSv());
+   DoubleVector x__k(x_k(model));
+
+   for(int k=1; k<=2; k++) {
+      result += ( (AAC_(k) * F1C(x__k(k)) / 12. + 2. * MCha(k) / 3. * BBC_(k) * F2C(x__k(k)))
+                   * 16. * log(MM / MSv(2))
+                  - (47. * AAC_(k) * F3C(x__k(k)) / 72.
+                     + 122. * MCha(k) / 9. * BBC_(k) * F4C(x__k(k)))
+                  - (0.5 * AAC_(k) * F1C(x__k(k)) + 2. * MCha(k) * BBC_(k) * F2C(x__k(k)))
+             /*      * L(sqr(MSv(2))) */ );
+   }
+
+   return  oneOver16PiSqr * sqr(MM / MSv(2)) * alpha * 0.25 / Pi * result;
+}
+
+double amuChi0Photonic(const MSSM_gm2_wrapper& model) {
+   double result = 0.;
+   double MM = model.get_MFe()(2);
+   double alpha = 1./137.036;
+   DoubleMatrix AAN_(AAN(model));
+   DoubleMatrix BBN_(BBN(model));
+   DoubleVector MNeu(model.get_MChi());
+   DoubleVector MSmu(model.get_MSmu());
+   DoubleMatrix x__im(x_im(model));
+
+   for(int i=1; i<=4; ++i) {
+      for(int m=1; m<=2; ++m) {
+         result +=  1. / sqr(MSmu(m))
+                    * ((- 1. / 12. * AAN_(i, m) * F1N(x__im(i, m))
+                       + MNeu(i) / 3. * BBN_(i, m) * F2N(x__im(i, m)))
+                      * 16. * log(MM / MSmu(m))
+                     - (- 35. / 72. * AAN_(i, m) * F3N(x__im(i, m))
+                       + 16. * MNeu(i) / 9. * BBN_(i, m) * F4N(x__im(i, m)))
+                     + (0.25 * AAN_(i, m) * F1N(x__im(i, m)))
+                  /*    * L(sqr(MSmu(m))) */ );
+      }
+   }
+
+   return oneOver16PiSqr * alpha * sqr(MM) * 0.25 / Pi;
 }
 
 } // namespace gm2
