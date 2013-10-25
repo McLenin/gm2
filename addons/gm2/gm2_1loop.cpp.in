@@ -154,6 +154,54 @@ ComplexVector c_R(const MSSM_gm2_wrapper& model) {
    return c__R;
 }
 
+DoubleVector AAC(const MSSM_gm2_wrapper& model) {
+   DoubleVector result(2);
+   ComplexVector c__L = c_L(model);
+   ComplexVector c__R = c_R(model);
+   for(int k=1; k<=2; ++k) {
+      result(k) = norm(c__L(k)) + norm(c__R(k));
+   }
+
+   return result;
+}
+
+DoubleMatrix AAN(const MSSM_gm2_wrapper& model) {
+   DoubleMatrix result(4, 2);
+   ComplexMatrix n__L = n_L(model);
+   ComplexMatrix n__R = n_R(model);
+   for(int i=1; i<=4; ++i) {
+      for(int m=1; m<=2; ++m) {
+         result(i, m) = norm(n__L(i, m)) + norm(n__R(i, m));
+      }
+   }
+
+   return result;
+}
+
+DoubleVector BBC(const MSSM_gm2_wrapper& model) {
+   DoubleVector result(2);
+   ComplexVector c__L = c_L(model);
+   ComplexVector c__R = c_R(model);
+   for(int k=1; k<=2; ++k) {
+      result(k) = real(c__L(k) * c__R(k)) / model.get_MFe()(2);
+   }
+
+   return result;
+}
+
+DoubleMatrix BBN(const MSSM_gm2_wrapper& model) {
+   DoubleMatrix result(4, 2);
+   ComplexMatrix n__L = n_L(model);
+   ComplexMatrix n__R = n_R(model);
+   for(int i=1; i<=4; ++i) {
+      for(int m=1; m<=2; ++m) {
+         result(i, m) = real(n__L(i, m) * n__R(i, m)) / model.get_MFe()(2);
+      }
+   }
+
+   return result;
+}
+
 DoubleMatrix x_im(const MSSM_gm2_wrapper& model) {
    DoubleMatrix x__im(4, 2);
    DoubleVector m_smu(model.get_MSmu());

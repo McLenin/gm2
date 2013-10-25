@@ -48,6 +48,11 @@ ComplexMatrix n_R(const MSSM_gm2_wrapper&);
 ComplexVector c_L(const MSSM_gm2_wrapper&);
 ComplexVector c_R(const MSSM_gm2_wrapper&);
 
+DoubleVector AAC(const MSSM_gm2_wrapper&);
+DoubleMatrix AAN(const MSSM_gm2_wrapper&);
+DoubleVector BBC(const MSSM_gm2_wrapper&);
+DoubleMatrix BBN(const MSSM_gm2_wrapper&);
+
 DoubleMatrix x_im(const MSSM_gm2_wrapper&);
 DoubleVector x_k(const MSSM_gm2_wrapper&);
 
