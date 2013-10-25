@@ -127,7 +127,7 @@ double DeltaTanBeta(const MSSM_gm2_wrapper& model) {
    double ytau = model.get_Ye()(2, 2);
    double ytop = model.get_Yu()(2, 2);
    double ybot = model.get_Yd()(2, 2);
-   double MUDIM2 = 1.;                              // ???
+   double MUDIM2 = 250000.;
 
    return - oneOver16PiSqr * (sqr(ytau) + sqr(ytop) + sqr(ybot)) * log(MUDIM2 / LogScale);
 }
@@ -139,10 +139,12 @@ double amuWHnu2L(const MSSM_gm2_wrapper& model) {
    double TB = model.get_vu() / model.get_vd();
    double mu = model.get_Mu();
    DoubleVector MSv = model.get_MSv();
+   double test1 = .75;
 
    return ( sqr(g2) * 2. * oneOver16PiSqr  * sqr(MM) * M2 * mu * TB
            / sqr(sqr(MSv(2))) * Fa(sqr(M2 / MSv(2)), sqr(mu / MSv(2)))
-           /* * (test 1??? + ganz viele deltas)*/ );
+            * (.02 * test1 + Deltag2(model) + DeltaYukHiggsino(model)
+              + DeltaYukWinoHiggsino(model) + DeltaTanBeta(model)) );
 }
 
 double amuWHmuL2L(const MSSM_gm2_wrapper& model) {
@@ -152,10 +154,12 @@ double amuWHmuL2L(const MSSM_gm2_wrapper& model) {
    double TB = model.get_vu() / model.get_vd();
    double mu = model.get_Mu();
    Eigen::Matrix<double,3,3> ml2 = model.get_ml2();
+   double test2 = .75;
 
    return  ( - sqr(g2) * oneOver16PiSqr * sqr(MM) * M2 * mu * TB
             / sqr(sqr(ml2(1, 1))) * Fb(sqr(M2 / ml2(1, 1)), sqr(mu / ml2(1, 1)))
-            /* * (test2 + ganz viele deltas) */ );
+             * (.02 * test2 + Deltag2(model) + DeltaYukHiggsino(model)
+              + DeltaYukWinoHiggsino(model) + DeltaTanBeta(model))  );
 }
 
 double amuBHmuL2L(const MSSM_gm2_wrapper& model) {
@@ -165,10 +169,12 @@ double amuBHmuL2L(const MSSM_gm2_wrapper& model) {
    double TB = model.get_vu() / model.get_vd();
    double mu = model.get_Mu();
    Eigen::Matrix<double,3,3> ml2 = model.get_ml2();
+   double test3 = .75;
 
    return ( sqr(gY) * oneOver16PiSqr * sqr(MM) * M1 * TB * mu
            / sqr(sqr(ml2(1, 1))) * Fb(sqr(M1 / ml2(1, 1)), sqr(mu / ml2(1, 1)))
-           /* * (test3 + ganz viele deltas) */ );
+            * (.02 * test3 + Deltag1(model) + DeltaYukHiggsino(model)
+              + DeltaYukBinoHiggsino(model) + DeltaTanBeta(model))  );
 }
 
 double amuBHmuR2L(const MSSM_gm2_wrapper& model) {
@@ -178,10 +184,12 @@ double amuBHmuR2L(const MSSM_gm2_wrapper& model) {
    double TB = model.get_vu() / model.get_vd();
    double mu = model.get_Mu();
    Eigen::Matrix<double,3,3> me2 = model.get_me2();
+   double test4 = 2.;
 
    return ( - sqr(gY) * 2. * oneOver16PiSqr * sqr(MM) * M1 * TB * mu
            / sqr(sqr(me2(1, 1))) * Fb(sqr(M1 / me2(1, 1)), sqr(mu / me2(1, 1)))
-           /* * (test4 + ganz viele deltas) */ );
+            * (.02 * test4 + Deltag1(model) + DeltaYukHiggsino(model)
+              + DeltaYukBinoHiggsino(model) + DeltaTanBeta(model))  );
 }
 
 double amuBmuLmuR2L(const MSSM_gm2_wrapper& model) {
@@ -192,10 +200,11 @@ double amuBmuLmuR2L(const MSSM_gm2_wrapper& model) {
    double mu = model.get_Mu();
    Eigen::Matrix<double,3,3> me2 = model.get_me2();
    Eigen::Matrix<double,3,3> ml2 = model.get_ml2();
+   double test5 = 1.5;
 
    return ( sqr(gY) * 2. * oneOver16PiSqr * sqr(MM) * mu * TB
            / (sqr(M1) * M1) * Fb(sqr(ml2(1, 1) / M1), sqr(me2(1, 1) / M1))
-           /* * (test5 + ganz viele deltas) */ );
+            * (.02 * test5 + Deltag1(model) + DeltaTanBeta(model)) );
 }
 
 // photonic corrections, all
@@ -209,6 +218,7 @@ double amuChipmPhotonic(const MSSM_gm2_wrapper& model) {
    DoubleVector MCha(model.get_MCha());
    DoubleVector MSv(model.get_MSv());
    DoubleVector x__k(x_k(model));
+   double mu_DREG = 500.;
 
    for(int k=1; k<=2; k++) {
       result += ( (AAC_(k) * F1C(x__k(k)) / 12. + 2. * MCha(k) / 3. * BBC_(k) * F2C(x__k(k)))
@@ -216,7 +226,7 @@ double amuChipmPhotonic(const MSSM_gm2_wrapper& model) {
                   - (47. * AAC_(k) * F3C(x__k(k)) / 72.
                      + 122. * MCha(k) / 9. * BBC_(k) * F4C(x__k(k)))
                   - (0.5 * AAC_(k) * F1C(x__k(k)) + 2. * MCha(k) * BBC_(k) * F2C(x__k(k)))
-             /*      * L(sqr(MSv(2))) */ );
+                   * log(sqr(MSv(2) / mu_DREG)) );
    }
 
    return  oneOver16PiSqr * sqr(MM / MSv(2)) * alpha * 0.25 / Pi * result;
@@ -231,6 +241,7 @@ double amuChi0Photonic(const MSSM_gm2_wrapper& model) {
    DoubleVector MNeu(model.get_MChi());
    DoubleVector MSmu(model.get_MSmu());
    DoubleMatrix x__im(x_im(model));
+   double mu_DREG = model.get_Mu();        // ???
 
    for(int i=1; i<=4; ++i) {
       for(int m=1; m<=2; ++m) {
@@ -241,7 +252,7 @@ double amuChi0Photonic(const MSSM_gm2_wrapper& model) {
                      - (- 35. / 72. * AAN_(i, m) * F3N(x__im(i, m))
                        + 16. * MNeu(i) / 9. * BBN_(i, m) * F4N(x__im(i, m)))
                      + (0.25 * AAN_(i, m) * F1N(x__im(i, m)))
-                  /*    * L(sqr(MSmu(m))) */ );
+                      * log(sqr(MSmu(m) / mu_DREG)) );
       }
    }
 
