@@ -37,6 +37,8 @@ public:
 
    DoubleVector get_MSmu() const {return MSmu;}
    DoubleMatrix get_USmu() const {return USmu;}
+   double get_Mz() const {return 90.0894;}
+   double get_Mw() const {return 78.4507;}
    void set_MSmu(const DoubleVector& MSmu_new)
    {MSmu = MSmu_new;}
    void set_USmu(const DoubleMatrix& USmu_new)
