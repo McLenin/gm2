@@ -13,6 +13,9 @@ LIBGM2_EXE_SRC := \
 LIBGM2_TEST_SRC := \
 		$(DIR)/test_gm2_1loop.cpp
 
+LIBGM2_TEST2_SRC := \
+                $(DIR)/test_gm2_2loop.cpp 
+
 LIBGM2_OBJ := \
 		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_SRC)))
 
@@ -22,6 +25,9 @@ LIBGM2_EXE_OBJ := \
 LIBGM2_TEST_OBJ := \
 		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_TEST_SRC)))
 
+LIBGM2_TEST2_OBJ := \
+		$(patsubst %.cpp, %.o, $(filter %.cpp, $(LIBGM2_TEST2_SRC)))
+
 LIBGM2_DEP := \
 		$(LIBGM2_OBJ:.o=.d)
 
@@ -30,6 +36,9 @@ LIBGM2_EXE_DEP := \
 
 LIBGM2_TEST_DEP := \
 		$(LIBGM2_TEST_OBJ:.o=.d)
+
+LIBGM2_TEST2_DEP := \
+                $(LIBGM2_TEST2_OBJ:.o=.d)
 
 LIBGM2     := $(DIR)/$(MODNAME)$(LIBEXT)
 
@@ -54,16 +63,19 @@ GM2_EXE    := \
 GM2_TEST_EXE := \
 		$(patsubst %.cpp, %.x, $(filter %.cpp, $(LIBGM2_TEST_SRC)))
 
+GM2_TEST2_EXE := \
+		$(patsubst %.cpp, %.x, $(filter %.cpp, $(LIBGM2_TEST2_SRC)))
+
 .PHONY:         all-$(MODNAME) clean-$(MODNAME) distclean-$(MODNAME)
 
 all-$(MODNAME): $(LIBGM2)
 
 clean-$(MODNAME):
-		rm -rf $(LIBGM2_OBJ) $(LIBGM2_EXE_OBJ) $(LIBGM2_TEST_OBJ)
+		rm -rf $(LIBGM2_OBJ) $(LIBGM2_EXE_OBJ) $(LIBGM2_TEST_OBJ) $(LIBGM2_TEST2_OBJ)
 
 distclean-$(MODNAME): clean-$(MODNAME)
-		rm -rf $(LIBGM2_DEP) $(LIBGM2_EXE_DEP) $(LIBGM2_TEST_DEP)
-		rm -rf $(GM2_EXE) $(GM2_TEST_EXE)
+		rm -rf $(LIBGM2_DEP) $(LIBGM2_EXE_DEP) $(LIBGM2_TEST_DEP) $(LIBGM2_TEST2_DEP)
+		rm -rf $(GM2_EXE) $(GM2_TEST_EXE) $(GM2_TEST2_EXE)
 		rm -rf $(LIBGM2)
 
 clean::         clean-$(MODNAME)
@@ -93,9 +105,13 @@ $(GM2_EXE): $(LIBGM2_EXE_OBJ) $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
 $(GM2_TEST_EXE): $(LIBGM2_TEST_OBJ) $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
 		$(CXX) -o $@ $(abspath $^) $(THREADLIBS) $(GSLLIBS) $(FLIBS)
 
+$(GM2_TEST2_EXE): $(LIBGM2_TEST2_OBJ) $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
+		$(CXX) -o $@ $(abspath $^) $(THREADLIBS) $(GSLLIBS) $(FLIBS)
+
 # add boost and eigen flags for the test object files and dependencies
 $(GM2_TEST_EXE): CPPFLAGS += $(BOOSTFLAGS) $(EIGENFLAGS)
+$(GM2_TEST2_EXE): CPPFLAGS += $(BOOSTFLAGS) $(EIGENFLAGS)
 
-ALLDEP += $(LIBGM2_DEP) $(LIBGM2_EXE_DEP) $(LIBGM2_TEST_DEP)
+ALLDEP += $(LIBGM2_DEP) $(LIBGM2_EXE_DEP) $(LIBGM2_TEST_DEP) $(LIBGM2_TEST2_DEP)
 ALLLIB += $(LIBGM2)
-ALLEXE += $(GM2_EXE) $(GM2_TEST_EXE)
+ALLEXE += $(GM2_EXE) $(GM2_TEST_EXE) $(GM2_TEST2_EXE)
