@@ -50,6 +50,7 @@ double amuWHmuL2L(const MSSM_gm2_wrapper&);
 double amuBHmuL2L(const MSSM_gm2_wrapper&);
 double amuBHmuR2L(const MSSM_gm2_wrapper&);
 double amuBmuLmuR2L(const MSSM_gm2_wrapper&);
+double amu2Lapprox(const MSSM_gm2_wrapper&);
 
 double amuChipmPhotonic(const MSSM_gm2_wrapper&);
 double amuChi0Photonic(const MSSM_gm2_wrapper&);
