@@ -26,12 +26,13 @@
 
 using namespace flexiblesusy;
 
-/**
- * Setup model parameters.  The parameters are in agreement with gauge
- * coupling and soft parameter unification at the GUT scale.
- *
- * @param model model class to setup
- */
+/*
+  * Setup model parameters.  The parameters are in agreement with gauge
+  * coupling and soft parameter unification at the GUT scale.
+  *
+  * @param model model class to setup
+*/
+
 void setup(gm2::MSSM_gm2_wrapper& model)
 {
    Eigen::Matrix<double,3,3> Yu;
@@ -165,6 +166,7 @@ int main()
    INFO("amuBHmuL = " << gm2::amuBHmuL(model));
    INFO("amuWHmuL = " << gm2::amuWHmuL(model));
    INFO("amuBHmuR = " << gm2::amuBHmuR(model));
+   INFO("amu1Lapprox = " << amu1Lapprox(model));
    INFO("--------------------------------------");
    INFO("----- g-2 (2-loop) - corrections -----");
    INFO("--------------------------------------");
@@ -176,6 +178,9 @@ int main()
    INFO("amuBmuLmuR2L = " << amuBmuLmuR2L(model));
    INFO("amuChipmPhotonic = " << amuChipmPhotonic(model));
    INFO("amuChi0Photonic = " << amuChi0Photonic(model));
+   INFO("--------------------------------------");
+   INFO("amu2Lapprox = " << amu2Lapprox(model));
+   INFO("2L / 1L = " << amu2Lapprox(model) / amu1Lapprox(model));
 
    return 0;
 }
