@@ -59,7 +59,7 @@ double amuBHmuL(const MSSM_gm2_wrapper& model) {
    double M1 = model.get_MassB();
    double MUE = model.get_Mu();
    double MSL_2 = sqrt(model.get_ml2()(1, 1));
-   double gY = model.get_g1(); // ???
+   double gY = sqrt(3. / 5.) * model.get_g1();
 
    return ( sqr(gY) * oneOver16PiSqr
             * (sqr(model.get_MFe()(2)) * M1 * MUE * tan_beta)
@@ -72,7 +72,7 @@ double amuBHmuR(const MSSM_gm2_wrapper& model) {
    double M1 = model.get_MassB();
    double MUE = model.get_Mu();
    double MSE_2 = sqrt(model.get_me2()(1, 1));
-   double gY = model.get_g1(); // ???
+   double gY = sqrt(3. / 5.) * model.get_g1();
 
    return ( - sqr(gY) * 2. * oneOver16PiSqr
             * (sqr(model.get_MFe()(2)) * M1 * MUE * tan_beta)
@@ -86,7 +86,7 @@ double amuBmuLmuR(const MSSM_gm2_wrapper& model) {
    double MUE = model.get_Mu();
    double MSL_2 = sqrt(model.get_ml2()(1, 1));
    double MSE_2 = sqrt(model.get_me2()(1, 1));
-   double gY = model.get_g1(); // ???
+   double gY = sqrt(3. / 5.) * model.get_g1();
 
    return ( sqr(gY) * 2. * oneOver16PiSqr
             * (sqr(model.get_MFe()(2)) * MUE * tan_beta)
@@ -104,7 +104,7 @@ double amu1Lapprox(const MSSM_gm2_wrapper& model) {
 
 ComplexMatrix n_L(const MSSM_gm2_wrapper& model) {
    ComplexMatrix result(4, 2);
-   double g1 = model.get_g1();
+   double gY =  sqrt(3. / 5.) * model.get_g1(); // !!!
    double g2 = model.get_g2();
    double ymu = model.get_Ye()(1, 1);
    ComplexMatrix ZN(model.get_ZN());
@@ -112,7 +112,7 @@ ComplexMatrix n_L(const MSSM_gm2_wrapper& model) {
    DoubleMatrix u_smu(model.get_USmu());
    for(int i=1; i <=4; ++i) {
       for(int m=1; m <=2; ++m) {
-         result(i, m) = ( (1. / sqrt(2.) * ( g1 * model.get_ZN()(i, 1)
+         result(i, m) = ( (1. / sqrt(2.) * ( gY * model.get_ZN()(i, 1)
                                          + g2 * ZN(i, 2) ) * Conj(u_smu(m, 1)) )
                       - ymu * ZN(i, 3) * Conj(u_smu(m, 2)) );
       }
@@ -123,14 +123,14 @@ ComplexMatrix n_L(const MSSM_gm2_wrapper& model) {
 
 ComplexMatrix n_R(const MSSM_gm2_wrapper& model) {
    ComplexMatrix result(4, 2);
-   double g1 = model.get_g1();
+   double gY = sqrt(3. / 5.) * model.get_g1(); // !!!(nochmal nachfragen)
    double ymu = model.get_Ye()(1, 1);
    ComplexMatrix ZN(model.get_ZN());
    DoubleVector m_smu(model.get_MSmu());
    DoubleMatrix u_smu(model.get_USmu());
    for(int i=1; i <=4; ++i) {
       for(int m=1; m <=2; ++m) {
-         result(i, m) = ( sqrt(2.) * g1 * ZN(i, 1) * u_smu(m, 2) 
+         result(i, m) = ( sqrt(2.) * gY * ZN(i, 1) * u_smu(m, 2) 
                        + ymu * ZN(i, 3) * u_smu(m, 1) );
       }
    }
@@ -141,8 +141,9 @@ ComplexMatrix n_R(const MSSM_gm2_wrapper& model) {
 ComplexVector c_L(const MSSM_gm2_wrapper& model) {
    ComplexVector result(2);
    double g2 = model.get_g2();
+   ComplexMatrix UP(model.get_UP());
    for(int k=1; k<=2; ++k) {
-      result(k) = - g2 * model.get_UP()(k, 1);
+      result(k) = - g2 * UP(k, 1);
    }
    return result;
 }
@@ -150,8 +151,9 @@ ComplexVector c_L(const MSSM_gm2_wrapper& model) {
 ComplexVector c_R(const MSSM_gm2_wrapper& model) {
    ComplexVector result(2);
    double ymu = model.get_Ye()(1, 1);
+   ComplexMatrix UM(model.get_UM());
    for(int k=1; k<=2; ++k) {
-      result(k) = ymu * model.get_UM()(k, 2);
+      result(k) = ymu * UM(k, 2);
    }
 
    return result;
