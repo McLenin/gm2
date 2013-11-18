@@ -39,11 +39,23 @@ void setup(gm2::MSSM_gm2_wrapper& model)
    Eigen::Matrix<double,3,3> Yd;
    Eigen::Matrix<double,3,3> Ye;
    double Mu;
-   double g1;
-   double g2;
+   double TB;
+   double EL;
    double g3;
-   double vd;
-   double vu;
+   double MW;
+   double MZ;
+   double ME = 0.00051;
+   double MM = 0.104259;
+   double ML = 1.777;
+   double MU = 0.04151;
+   double MC = 1.5;
+   double MT = 173.5;
+   double MD = 0.0415;
+   double MS = 0.15;
+   double MB = 3.;
+   Eigen::Matrix<double,3,3> Ae;
+   Eigen::Matrix<double,3,3> Au;
+   Eigen::Matrix<double,3,3> Ad;
    Eigen::Matrix<double,3,3> TYu;
    Eigen::Matrix<double,3,3> TYd;
    Eigen::Matrix<double,3,3> TYe;
@@ -73,13 +85,25 @@ void setup(gm2::MSSM_gm2_wrapper& model)
                    0,          0,    0.10199;
 
    Mu = 627.164;
-   g1 = 0.468171;
-   g2 = 0.642353;
+   TB = 10.;
+   MW = 80.385;
+   MZ = 91.1876;
+   EL = 0.31218;
    g3 = 1.06459;
-   vd = 25.0944;
-   vu = 242.968;
 
    // soft parameters
+   Ae << 1., 0., 0.,
+         0., 1., 0.,
+         0., 0., 1.;
+
+   Au << 1., 0., 0.,
+         0., 1., 0.,
+         0., 0., 1.;
+
+   Ad << 1., 0., 0.,
+         0., 1., 0.,
+         0., 0., 1.;
+
    TYu << -0.0144387,        0,        0, //f^uA^u
                    0, -7.64037,        0,
                    0,        0, -759.305;
@@ -122,15 +146,25 @@ void setup(gm2::MSSM_gm2_wrapper& model)
    MassG = 1114.45;// M_3
 
    // set parameters
+   model.set_TB(TB);
+   model.set_MW(MW);
+   model.set_MZ(MZ);
+   model.set_EL(EL);
    model.set_Yu(Yu);
    model.set_Yd(Yd);
    model.set_Ye(Ye);
+   model.set_Ae(Ae);
+   model.set_ME(ME);
+   model.set_MM(MM);
+   model.set_ML(ML);
+   model.set_MU(MU);
+   model.set_MC(MC);
+   model.set_MT(MT);
+   model.set_MD(MD);
+   model.set_MS(MS);
+   model.set_MB(MB);
    model.set_Mu(Mu);
-   model.set_g1(g1);
-   model.set_g2(g2);
    model.set_g3(g3);
-   model.set_vd(vd);
-   model.set_vu(vu);
    model.set_TYu(TYu);
    model.set_TYd(TYd);
    model.set_TYe(TYe);
@@ -147,6 +181,7 @@ void setup(gm2::MSSM_gm2_wrapper& model)
    model.set_MassG(MassG);
 
    // calculate tree-level masses
+
    model.calculate_DRbar_parameters();
 }
 
@@ -157,30 +192,35 @@ int main()
 
    const double gm2_1l = gm2::calculate_gm2_1loop(model);
 
+   INFO("g-2 (1-loop) = " << gm2_1l);
+   INFO("--------------------------------------"); 
    INFO("amuChi0 = " << gm2::amuChi0(model));
    INFO("amuChipm = " << gm2::amuChipm(model));
-   INFO("g-2 (1-loop) = " << gm2_1l);
-
+   INFO("--------------------------------------");
+   INFO("amu1Lapprox = " << amu1Lapprox(model));
+   INFO("--------------------------------------"); 
    INFO("amuWHnu = " << gm2::amuWHnu(model));
    INFO("amuBmuLmuR = " << gm2::amuBmuLmuR(model));
    INFO("amuBHmuL = " << gm2::amuBHmuL(model));
    INFO("amuWHmuL = " << gm2::amuWHmuL(model));
    INFO("amuBHmuR = " << gm2::amuBHmuR(model));
-   INFO("amu1Lapprox = " << amu1Lapprox(model));
    INFO("--------------------------------------");
    INFO("----- g-2 (2-loop) - corrections -----");
    INFO("--------------------------------------");
-   INFO("TanBetaCorrectionFactor 1/(1 + Delta) = " << tan_beta_cor(model));
+   INFO("amu2LSFsapprox = " << amu2LFSfapprox(model));
+   INFO("--------------------------------------"); 
    INFO("amuWHnu2L = " << amuWHnu2L(model));
    INFO("amuWHmuL2L = " << amuWHmuL2L(model));
    INFO("amuBHmuL2L = " << amuBHmuL2L(model));
    INFO("amuBHmuR2L = " << amuBHmuR2L(model));
    INFO("amuBmuLmuR2L = " << amuBmuLmuR2L(model));
+   INFO("2L / 1L = " << amu2LFSfapprox(model) / gm2_1l);
+   INFO("--------------------------------------"); 
+   INFO("TanBetaCorrectionFactor 1/(1 + Delta) = " << tan_beta_cor(model));
+   INFO("--------------------------------------"); 
    INFO("amuChipmPhotonic = " << amuChipmPhotonic(model));
    INFO("amuChi0Photonic = " << amuChi0Photonic(model));
    INFO("--------------------------------------");
-   INFO("amu2Lapprox = " << amu2Lapprox(model));
-   INFO("2L / 1L = " << amu2Lapprox(model) / amu1Lapprox(model));
 
    return 0;
 }
