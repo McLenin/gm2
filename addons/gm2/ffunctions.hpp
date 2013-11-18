@@ -19,23 +19,32 @@
 #ifndef GM2_FFUNCTIONS_H
 #define GM2_FFUNCTIONS_H
 
+#include "logger.hpp"
+#include <Eigen/Core>
+
 namespace flexiblesusy {
 
 namespace gm2 {
 
-   double F1C(double);
-   double F2C(double);
-   double F3C(double);
-   double F4C(double);
-   double F1N(double);
-   double F2N(double);
-   double F3N(double);
-   double F4N(double);
-   double Fa(double, double);
-   double Fb(double, double);
-   double G3(double);
-   double G4(double);
-   double Iabc(double, double, double);
+template <typename T>
+bool is_equal(T a, T b, T prec = std::numeric_limits<T>::epsilon())
+{
+   return std::fabs(a - b) < prec;
+}
+
+double F1C(double);
+double F2C(double);
+double F3C(double);
+double F4C(double);
+double F1N(double);
+double F2N(double);
+double F3N(double);
+double F4N(double);
+double Fa(double, double);
+double Fb(double, double);
+double G3(double);
+double G4(double);
+double Iabc(double, double, double);
 
 } // namespace gm2
 
