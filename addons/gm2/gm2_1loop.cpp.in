@@ -31,65 +31,65 @@ namespace gm2 {
 // approximations
 
 double amuWHnu(const MSSM_gm2_wrapper& model) {
-   double tan_beta = model.get_vu() / model.get_vd();
+   double tan_beta = model.get_TB();
    double M2 = model.get_MassWB();
    double MUE = model.get_Mu();
-   double MSf_112 = model.get_MSv()(2);
+   double MSv_2 = model.get_MSv()(2);
 
    return ( sqr(model.get_g2()) * 2. * oneOver16PiSqr
-            * (sqr(model.get_MFe()(2)) * M2 * MUE * tan_beta)
-            / sqr(sqr(MSf_112))
-            * Fa(sqr(M2 / MSf_112), sqr(MUE / MSf_112)) );
+            * (sqr(model.get_MM()) * M2 * MUE * tan_beta)
+            / sqr(sqr(MSv_2))
+            * Fa(sqr(M2 / MSv_2), sqr(MUE / MSv_2)) );
 }
 
 double amuWHmuL(const MSSM_gm2_wrapper& model) {
-   double tan_beta = model.get_vu() / model.get_vd();
+   double tan_beta = model.get_TB();
    double M2 = model.get_MassWB();
    double MUE = model.get_Mu();
    double MSL_2 = sqrt(model.get_ml2()(1, 1));
 
    return ( - sqr(model.get_g2()) * oneOver16PiSqr
-            * (sqr(model.get_MFe()(2)) * M2 * MUE * tan_beta)
+            * (sqr(model.get_MM()) * M2 * MUE * tan_beta)
             / sqr(sqr(MSL_2))
             * Fb(sqr(M2 / MSL_2), sqr(MUE / MSL_2)) );
 }
 
 double amuBHmuL(const MSSM_gm2_wrapper& model) {
-   double tan_beta = model.get_vu() / model.get_vd();
+   double tan_beta = model.get_TB();
    double M1 = model.get_MassB();
    double MUE = model.get_Mu();
    double MSL_2 = sqrt(model.get_ml2()(1, 1));
-   double gY = sqrt(3. / 5.) * model.get_g1();
+   double gY = model.get_gY();
 
    return ( sqr(gY) * oneOver16PiSqr
-            * (sqr(model.get_MFe()(2)) * M1 * MUE * tan_beta)
+            * (sqr(model.get_MM()) * M1 * MUE * tan_beta)
             / sqr(sqr(MSL_2))
             * Fb(sqr(M1 / MSL_2), sqr(MUE / MSL_2)) );
 }
 
 double amuBHmuR(const MSSM_gm2_wrapper& model) {
-   double tan_beta = model.get_vu() / model.get_vd();
+   double tan_beta = model.get_TB();
    double M1 = model.get_MassB();
    double MUE = model.get_Mu();
    double MSE_2 = sqrt(model.get_me2()(1, 1));
-   double gY = sqrt(3. / 5.) * model.get_g1();
+   double gY = model.get_gY();
 
    return ( - sqr(gY) * 2. * oneOver16PiSqr
-            * (sqr(model.get_MFe()(2)) * M1 * MUE * tan_beta)
+            * (sqr(model.get_MM()) * M1 * MUE * tan_beta)
             / sqr(sqr(MSE_2))
             * Fb(sqr(M1 / MSE_2), sqr(MUE / MSE_2)) );
 }
 
 double amuBmuLmuR(const MSSM_gm2_wrapper& model) {
-   double tan_beta = model.get_vu() / model.get_vd();
+   double tan_beta = model.get_TB();
    double M1 = model.get_MassB();
    double MUE = model.get_Mu();
    double MSL_2 = sqrt(model.get_ml2()(1, 1));
    double MSE_2 = sqrt(model.get_me2()(1, 1));
-   double gY = sqrt(3. / 5.) * model.get_g1();
+   double gY = model.get_gY();
 
    return ( sqr(gY) * 2. * oneOver16PiSqr
-            * (sqr(model.get_MFe()(2)) * MUE * tan_beta)
+            * (sqr(model.get_MM()) * MUE * tan_beta)
             / (M1 * sqr(M1))
             * Fb(sqr(MSL_2 / M1), sqr(MSE_2 / M1)) );
 }
@@ -104,7 +104,7 @@ double amu1Lapprox(const MSSM_gm2_wrapper& model) {
 
 ComplexMatrix n_L(const MSSM_gm2_wrapper& model) {
    ComplexMatrix result(4, 2);
-   double gY =  sqrt(3. / 5.) * model.get_g1(); // !!!
+   double gY =  model.get_gY();
    double g2 = model.get_g2();
    double ymu = model.get_Ye()(1, 1);
    ComplexMatrix ZN(model.get_ZN());
@@ -123,7 +123,7 @@ ComplexMatrix n_L(const MSSM_gm2_wrapper& model) {
 
 ComplexMatrix n_R(const MSSM_gm2_wrapper& model) {
    ComplexMatrix result(4, 2);
-   double gY = sqrt(3. / 5.) * model.get_g1(); // !!!(nochmal nachfragen)
+   double gY = model.get_gY();
    double ymu = model.get_Ye()(1, 1);
    ComplexMatrix ZN(model.get_ZN());
    DoubleVector m_smu(model.get_MSmu());
@@ -188,7 +188,7 @@ DoubleVector BBC(const MSSM_gm2_wrapper& model) {
    ComplexVector c__L = c_L(model);
    ComplexVector c__R = c_R(model);
    for(int k=1; k<=2; ++k) {
-      result(k) = real(c__L(k) * c__R(k)) / model.get_MFe()(2);
+      result(k) = real(c__L(k) * c__R(k)) / model.get_MM();
    }
 
    return result;
@@ -200,7 +200,7 @@ DoubleMatrix BBN(const MSSM_gm2_wrapper& model) {
    ComplexMatrix n__R = n_R(model);
    for(int i=1; i<=4; ++i) {
       for(int m=1; m<=2; ++m) {
-         result(i, m) = real(n__L(i, m) * n__R(i, m)) / model.get_MFe()(2);
+         result(i, m) = real(n__L(i, m) * n__R(i, m)) / model.get_MM();
       }
    }
 
@@ -246,7 +246,7 @@ double amuChi0(const MSSM_gm2_wrapper& model) {
       }
    }
 
-   return result * sqr(model.get_MFe()(2)) * oneOver16PiSqr;
+   return result * sqr(model.get_MM()) * oneOver16PiSqr;
 }
 
 double amuChipm(const MSSM_gm2_wrapper& model) {
@@ -262,7 +262,7 @@ double amuChipm(const MSSM_gm2_wrapper& model) {
                   / (3. * sqr(MSv(2))) );
    }
 
-   return result * sqr(model.get_MFe()(2)) * oneOver16PiSqr;
+   return result * sqr(model.get_MM()) * oneOver16PiSqr;
 }
 
 double calculate_gm2_1loop(const MSSM_gm2_wrapper& model) {
