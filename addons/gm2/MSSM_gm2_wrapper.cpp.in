@@ -63,7 +63,7 @@ void MSSM_gm2_wrapper::convert_parameters() {
 void MSSM_gm2_wrapper::calculate_DRbar_parameters() {
    convert_parameters();
    @ModelName@<Two_scale>::calculate_DRbar_parameters();
-   const DoubleMatrix mass_matrix_6x6(get_mass_matrix_Se());
+   DoubleMatrix mass_matrix_6x6(get_mass_matrix_Se());
    DoubleMatrix mass_matrix_2x2(2, 2);
    mass_matrix_2x2(1,1) = mass_matrix_6x6(2,2);
    mass_matrix_2x2(1,2) = mass_matrix_6x6(2,5);
@@ -76,6 +76,44 @@ void MSSM_gm2_wrapper::calculate_DRbar_parameters() {
       ERROR("SMuon is a Tachyon");
 
    MSmu = AbsSqrt(MSmu);
+
+   mass_matrix_2x2(1,1) = mass_matrix_6x6(3,3);
+   mass_matrix_2x2(1,2) = mass_matrix_6x6(3,6);
+   mass_matrix_2x2(2,1) = mass_matrix_6x6(6,3);
+   mass_matrix_2x2(2,2) = mass_matrix_6x6(6,6);
+
+   Diagonalize2by2(mass_matrix_2x2, UStau, MStau);
+
+   if (MStau.min() < 0.)
+      ERROR("STauon is a Tachyon");
+
+   MStau = AbsSqrt(MStau);
+
+   mass_matrix_6x6 = get_mass_matrix_Sd();
+   mass_matrix_2x2(1,1) = mass_matrix_6x6(3,3);
+   mass_matrix_2x2(1,2) = mass_matrix_6x6(3,6);
+   mass_matrix_2x2(2,1) = mass_matrix_6x6(6,3);
+   mass_matrix_2x2(2,2) = mass_matrix_6x6(6,6);
+
+   Diagonalize2by2(mass_matrix_2x2, USbot, MSbot);
+
+   if (MSbot.min() < 0.)
+      ERROR("SBottem is a Tachyon");
+
+   MSbot = AbsSqrt(MSbot);
+
+   mass_matrix_6x6 = get_mass_matrix_Su();
+   mass_matrix_2x2(1,1) = mass_matrix_6x6(3,3);
+   mass_matrix_2x2(1,2) = mass_matrix_6x6(3,6);
+   mass_matrix_2x2(2,1) = mass_matrix_6x6(6,3);
+   mass_matrix_2x2(2,2) = mass_matrix_6x6(6,6);
+
+   Diagonalize2by2(mass_matrix_2x2, UStop, MStop);
+
+   if (MStop.min() < 0.)
+      ERROR("STop is a Tachyon");
+
+   MStop = AbsSqrt(MStop);
 }
 
 } // gm2

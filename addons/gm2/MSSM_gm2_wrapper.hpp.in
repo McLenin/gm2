@@ -32,13 +32,20 @@ class MSSM_gm2_wrapper : public @ModelName@<Two_scale> {
 public:
    MSSM_gm2_wrapper()
    : @ModelName@<Two_scale>(),
-   MSmu(2), USmu(2, 2), MW(80.385), MZ(91.1876), TB(10.), EL(0.303),
-   ME(0.00051),MM(0.105), ML(1.777), MU(0.04), MC(1.5), MT(173.5), MD(0.04),
-   MS(0.15), MB(3.), gY(0.35)
+   MSmu(2), USmu(2, 2), MStau(2), UStau(2, 2), MSbot(2), USbot(2, 2), MStop(2),
+   UStop(2, 2), MW(80.385), MZ(91.1876), TB(10.), EL(0.303), ME(0.00051),
+   MM(0.105), ML(1.777), MU(0.04), MC(1.5), MT(173.5), MD(0.04), MS(0.15),
+   MB(3.), gY(0.35)
    { }
 
    DoubleVector get_MSmu() const {return MSmu;}
    DoubleMatrix get_USmu() const {return USmu;}
+   DoubleVector get_MStau() const {return MStau;}
+   DoubleMatrix get_UStau() const {return UStau;}
+   DoubleVector get_MSbot() const {return MSbot;}
+   DoubleMatrix get_USbot() const {return USbot;}
+   DoubleVector get_MStop() const {return MStop;}
+   DoubleMatrix get_UStop() const {return UStop;}
    double get_gY() const {return sqrt(3. / 5.) * get_g1();}
    double get_EL() const {return EL;}
    double get_TB() const {return TB;}
@@ -61,6 +68,18 @@ public:
    {MSmu = MSmu_new;}
    void set_USmu(const DoubleMatrix& USmu_new)
    {USmu = USmu_new;}
+   void set_MStau(const DoubleVector& MStau_new)
+   {MStau = MStau_new;}
+   void set_UStau(const DoubleMatrix& UStau_new)
+   {UStau = UStau_new;}
+   void set_MSbot(const DoubleVector& MSbot_new)
+   {MSbot = MSbot_new;}
+   void set_USbot(const DoubleMatrix& USbot_new)
+   {USbot = USbot_new;}
+   void set_MStop(const DoubleVector& MStop_new)
+   {MStop = MStop_new;}
+   void set_UStop(const DoubleMatrix& UStop_new)
+   {UStop = UStop_new;}
    void set_TB(double TB_new)
    {TB = TB_new;}
    void set_MW(double MW_new)
@@ -103,6 +122,12 @@ private:
    Eigen::Matrix<double,3,3> Ad;
    DoubleVector MSmu;
    DoubleMatrix USmu;
+   DoubleVector MStau;
+   DoubleMatrix UStau;
+   DoubleVector MSbot;
+   DoubleMatrix USbot;
+   DoubleVector MStop;
+   DoubleMatrix UStop;
    double MW;
    double MZ;
    double TB;
