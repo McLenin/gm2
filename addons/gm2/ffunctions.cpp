@@ -93,7 +93,7 @@ double F4N(double x) {
    if(is_equal(x, 1.))
       ERROR("F4N: x must not be 1 !");
 
-   return - 2.25 /cube(1. - x) * ((x + 3.) * (x * log(x) + x - 1.)
+   return - 2.25 / cube(1. - x) * ((x + 3.) * (x * log(x) + x - 1.)
                                   + (6. * x + 2.) * dilog(1. - x));
 }
 
@@ -131,6 +131,34 @@ double Iabc(double a, double b, double c) {
            + sqr(b * c) * log(sqr(b / c))
            + sqr(c * a) * log(sqr(c / a))) 
            / ((sqr(a) - sqr(b)) * (sqr(b) - sqr(c)) * (sqr(a) - sqr(c))) );
+}
+
+double f_PS(double z) {
+   double result = 0.;
+   if(z < 0.25) {
+      double y = sqrt(1. - 4. * z);
+      result = 2. * z / y * (dilog(1. - 0.5 * (1. - y) / z) - dilog(1. - 0.5 * (1. + y) / z));
+   } else {
+      Complex y = sqrt(Complex(1. - 4. * z, 0.));
+      Complex zc(z, 0.);
+      result = real(2. * zc / y * (dilog(1. - 0.5 * (1. - y) / zc) - dilog(1. - 0.5 * (1. + y) / zc)));
+   }
+
+   return result;
+}
+
+double f_S(double z) {
+   if(z < 0.)
+      ERROR("f_S: z must not be negativ!");
+
+   return (2. * z - 1.) * f_PS(z) - 2. * z * (2. + log(z));
+}
+
+double f_sferm(double z) {
+   if(z < 0.)
+      ERROR("f_sferm: z must not be negativ!");
+
+   return 0.5 * z * (2. + log(z) - f_PS(z));
 }
 
 } // namespace gm2

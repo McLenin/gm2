@@ -45,6 +45,9 @@ double Fb(double, double);
 double G3(double);
 double G4(double);
 double Iabc(double, double, double);
+double f_PS(double);
+double f_S(double);
+double f_sferm(double);
 
 } // namespace gm2
 
