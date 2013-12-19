@@ -56,6 +56,14 @@ double amu2LFSfapprox(const MSSM_gm2_wrapper&);
 double amuChipmPhotonic(const MSSM_gm2_wrapper&);
 double amuChi0Photonic(const MSSM_gm2_wrapper&);
 
+double tan_alpha(const MSSM_gm2_wrapper&);
+ComplexMatrix lambda_mu_cha(const MSSM_gm2_wrapper&);
+ComplexMatrix lambda_stop(const MSSM_gm2_wrapper&);
+ComplexMatrix lambda_sbot(const MSSM_gm2_wrapper&);
+ComplexMatrix lambda_stau(const MSSM_gm2_wrapper&);
+double amua2LSferm(const MSSM_gm2_wrapper&);
+double amua2LCha(const MSSM_gm2_wrapper&);
+
 } // namespace gm2
 } // namespace flexiblesusy
 
