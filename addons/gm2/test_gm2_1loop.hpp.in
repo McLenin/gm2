@@ -28,7 +28,7 @@
 namespace flexiblesusy {
 namespace gm2{
 
-void setup(MSSM_gm2_wrapper&);
+void setup_SPS1b(MSSM_gm2_wrapper&);
 
 } // namespace gm2
 } // namespace flexiblesusy
