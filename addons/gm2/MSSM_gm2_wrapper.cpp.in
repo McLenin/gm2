@@ -58,6 +58,8 @@ void MSSM_gm2_wrapper::convert_parameters() {
    set_TYe(Ye_neu * Ae);
    set_TYu(Yu_neu * Au);
    set_TYd(Yd_neu * Ad);
+   double tan2b = 2. * TB / (1. - sqr(TB));
+   set_BMu(0.5 * sqr(MA0) * (tan2b / sqrt(1. + sqr(tan2b))));
 }
 
 void MSSM_gm2_wrapper::calculate_DRbar_parameters() {

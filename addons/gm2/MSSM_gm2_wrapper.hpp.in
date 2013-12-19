@@ -35,7 +35,7 @@ public:
    MSmu(2), USmu(2, 2), MStau(2), UStau(2, 2), MSbot(2), USbot(2, 2), MStop(2),
    UStop(2, 2), MW(80.385), MZ(91.1876), TB(10.), EL(0.303), ME(0.00051),
    MM(0.105), ML(1.777), MU(0.04), MC(1.5), MT(173.5), MD(0.04), MS(0.15),
-   MB(3.), gY(0.35)
+   MB(3.), gY(0.35), EL0(0.30282212), MUDIM(454.7), MA0(500.)
    { }
 
    DoubleVector get_MSmu() const {return MSmu;}
@@ -46,6 +46,9 @@ public:
    DoubleMatrix get_USbot() const {return USbot;}
    DoubleVector get_MStop() const {return MStop;}
    DoubleMatrix get_UStop() const {return UStop;}
+   double get_MA0() const {return MA0;}
+   double get_MUDIM() const {return MUDIM;}
+   double get_EL0() const {return EL0;}
    double get_gY() const {return sqrt(3. / 5.) * get_g1();}
    double get_EL() const {return EL;}
    double get_TB() const {return TB;}
@@ -106,6 +109,10 @@ public:
    {MS = MS_new;}
    void set_MB(double MB_new)
    {MB = MB_new;}
+   void set_MUDIM(double MUDIM_new)
+   {MUDIM = MUDIM_new;}
+   void set_MA0(double MA0_new)
+   {MA0 = MA0_new;}
    void set_Ae(const Eigen::Matrix<double,3,3>& Ae_new)
    {Ae = Ae_new;}
    void set_Au(const Eigen::Matrix<double,3,3>& Au_new)
@@ -142,6 +149,9 @@ private:
    double MS;
    double MB;
    double gY;
+   double EL0;
+   double MUDIM;
+   double MA0;
 };
 
 } // namespace gm2
