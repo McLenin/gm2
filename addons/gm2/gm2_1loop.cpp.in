@@ -104,17 +104,17 @@ double amu1Lapprox(const MSSM_gm2_wrapper& model) {
 
 ComplexMatrix n_L(const MSSM_gm2_wrapper& model) {
    ComplexMatrix result(4, 2);
-   double gY =  model.get_gY();
-   double g2 = model.get_g2();
-   double ymu = model.get_Ye()(1, 1);
+   double gY(model.get_gY());
+   double g2(model.get_g2());
+   double ymu(model.get_Ye()(1, 1));
    ComplexMatrix ZN(model.get_ZN());
    DoubleVector m_smu(model.get_MSmu());
    DoubleMatrix u_smu(model.get_USmu());
    for(int i=1; i <=4; ++i) {
       for(int m=1; m <=2; ++m) {
-         result(i, m) = ( (1. / sqrt(2.) * ( gY * model.get_ZN()(i, 1)
-                                         + g2 * ZN(i, 2) ) * Conj(u_smu(m, 1)) )
-                      - ymu * ZN(i, 3) * Conj(u_smu(m, 2)) );
+         result(i, m) = ( (1. / sqrt(2.) * ( gY * ZN(i, 1)
+                           + g2 * ZN(i, 2) ) * Conj(u_smu(m, 1)))
+                         - ymu * ZN(i, 3) * Conj(u_smu(m, 2)) );
       }
    }
 
@@ -123,8 +123,8 @@ ComplexMatrix n_L(const MSSM_gm2_wrapper& model) {
 
 ComplexMatrix n_R(const MSSM_gm2_wrapper& model) {
    ComplexMatrix result(4, 2);
-   double gY = model.get_gY();
-   double ymu = model.get_Ye()(1, 1);
+   double gY(model.get_gY());
+   double ymu(model.get_Ye()(1, 1));
    ComplexMatrix ZN(model.get_ZN());
    DoubleVector m_smu(model.get_MSmu());
    DoubleMatrix u_smu(model.get_USmu());
@@ -267,7 +267,7 @@ double amuChipm(const MSSM_gm2_wrapper& model) {
 
 double calculate_gm2_1loop(const MSSM_gm2_wrapper& model) {
 
-   return amuChi0(model) + amuChipm(model); //@gm2_1l@;
+   return amuChi0(model) + amuChipm(model);
 }
 
 } // namespace gm2
