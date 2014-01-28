@@ -69,7 +69,6 @@ bool close(double m1, double m2, double tol) {
   const double mmax = fabs(maximum(fabs(m1), fabs(m2)));
   const double mmin = fabs(minimum(fabs(m1), fabs(m2)));
   const double max_tol = tol * mmax;
-
   if (max_tol == 0.0 && mmax != 0.0 && tol != 0.0)
     return (mmax - mmin <= tol);
 

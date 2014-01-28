@@ -5,6 +5,7 @@
 \usepackage[T1]{fontenc}          % output font encoding
 \usepackage{booktabs,tabularx}
 \usepackage{rotating}             % for sidewaystable
+\usepackage{xspace}
 \usepackage[usenames]{xcolor}
 \usepackage{tikz,tikz-uml}
 \usepackage{listings}             % source code highlighting
@@ -20,26 +21,51 @@
   showstringspaces=false,
   frame=single}
 \usepackage[pdftitle={FlexibleSUSY --- A spectrum generator generator for supersymmetric models},
-pdfauthor={Jae-hyeon Park,Dominik Stockinger,Alexander Voigt},
+pdfauthor={Peter Athron,Jae-hyeon Park,Dominik Stockinger,Alexander Voigt},
 pdfkeywords={FlexibleSUSY,supersymmetry,spectrum,generator,MSSM,NMSSM,E6SSM},
 bookmarks=true, linktocpage]{hyperref}
 
-\newcommand{\sarah}{\texttt{SARAH}}
-\newcommand{\flexisusy}{\texttt{FlexibleSUSY}}
+\input{doc/version}
+
+\newcommand{\sarah}{SARAH\xspace}
+\newcommand{\flexisusy}{\FlexibleSUSY}
 
 \newcommand{\code}[1]{\lstinline|#1|}  % inline source code
 \newcommand{\textoverline}[1]{$\overline{\mbox{#1}}$}
 \newcommand{\DRbar}{\textoverline{DR}}  % inline source code
-
-\title{\bf FlexibleSUSY --- A spectrum generator generator for
-  supersymmetric models}
-\author{Jae-hyeon Park, Dominik St\"ockinger, Alexander Voigt\\[2em]
-  {\sl Institut f\"ur Kern- und Teilchenphysik, TU Dresden, Dresden,
-    Germany}}
-\date{\today}
+\newcommand{\MSbar}{\textoverline{MS}}  % inline source code
 
 \begin{document}
-\maketitle
+
+\begin{titlepage}
+  \vspace*{55mm}
+  \begin{center}
+    {\Large\bf \FlexibleSUSY\ --- A spectrum generator generator for
+      supersymmetric models}
+    \\[8mm]
+    Peter Athron$^{*}$,
+    Jae-hyeon Park$^{\dagger}$,
+    Dominik St\"ockinger$^{\dagger}$,
+    Alexander Voigt$^{\dagger}$
+    \\[3mm]
+    {\small\it $^*$ ARC Centre of Excellence for Particle Physics at
+      the Terascale, School of Chemistry and Physics, University of
+      Adelaide, Adelaide, SA 5005, Australia,
+      \\[2mm]
+      \small\it $^\dagger$ Institut f\"ur Kern und Teilchenphysik, TU
+      Dresden, Dresden, 01062, Germany.\\[2mm]}
+  \end{center}
+  \vspace*{0.75cm}
+  \begin{abstract}
+    We present FlexibleSUSY a new spectrum generator generator for
+    supersymmetric models with modularity and speed in mind.
+  \end{abstract}
+  \vfill
+  \begin{flushleft}
+    \FlexibleSUSY version \FlexibleSUSYVersion
+  \end{flushleft}
+\end{titlepage}
+
 \tableofcontents
 \clearpage
 \input{doc/chapters/overview}

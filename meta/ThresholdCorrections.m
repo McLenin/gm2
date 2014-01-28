@@ -1,6 +1,7 @@
 
 BeginPackage["ThresholdCorrections`", {"SARAH`", "TextFormatting`", "CConversion`", "TreeMasses`", "Constraint`"}];
 
+CalculateGaugeCouplings::usage="";
 CalculateDeltaAlphaEm::usage="";
 CalculateDeltaAlphaS::usage="";
 SetDRbarYukawaCouplings::usage="";
@@ -50,7 +51,7 @@ CalculateDRbarCoupling[{coupling_, name_, group_}] :=
                If[!NumericQ[dynkin], dynkin = 0];
                If[dim == 1,
                   result -= prefactor dynkin Global`FiniteLog[Abs[FlexibleSUSY`M[particle]/Global`currentScale]];,
-                  result -= Sum[prefactor dynkin Global`FiniteLog[Abs[FlexibleSUSY`M[particle][i]/Global`currentScale]],
+                  result -= Sum[prefactor dynkin Global`FiniteLog[Abs[FlexibleSUSY`M[particle][i-1]/Global`currentScale]],
                                 {i,dimStart,dim}];
                  ];
               ];
@@ -60,7 +61,7 @@ CalculateDRbarCoupling[{coupling_, name_, group_}] :=
 CalculateDeltaAlphaEm[] :=
     Module[{result, deltaSusy, deltaSM, prefactor},
            prefactor = Global`alphaEm / (2 Pi);
-           deltaSM = 1/3 - 16/9 Global`FiniteLog[Abs[FlexibleSUSY`M[SARAH`TopQuark][3]/Global`currentScale]];
+           deltaSM = 1/3 - 16/9 Global`FiniteLog[Abs[FlexibleSUSY`M[SARAH`TopQuark][2]/Global`currentScale]];
            deltaSusy = CalculateDRbarElectromagneticCoupling[];
            result = Parameters`CreateLocalConstRefs[deltaSusy + deltaSM] <> "\n" <>
                     "const double delta_alpha_em_SM = " <>
@@ -74,7 +75,7 @@ CalculateDeltaAlphaEm[] :=
 CalculateDeltaAlphaS[] :=
     Module[{result, deltaSusy, deltaSM, prefactor},
            prefactor = Global`alphaS / (2 Pi);
-           deltaSM = - 2/3 Global`FiniteLog[Abs[FlexibleSUSY`M[SARAH`TopQuark][3]/Global`currentScale]];
+           deltaSM = - 2/3 Global`FiniteLog[Abs[FlexibleSUSY`M[SARAH`TopQuark][2]/Global`currentScale]];
            deltaSusy = CalculateDRbarColorCoupling[];
            result = Parameters`CreateLocalConstRefs[deltaSusy + deltaSM] <> "\n" <>
                     "const double delta_alpha_s_SM = " <>
@@ -212,6 +213,27 @@ SetDRbarYukawaCouplings[] :=
                     "new_Yu = " <> RValueToCFormString[top] <> ";\n" <>
                     "new_Yd = " <> RValueToCFormString[bot] <> ";\n" <>
                     "new_Ye = " <> RValueToCFormString[tau] <> ";\n";
+           Return[result];
+          ];
+
+CalculateGaugeCouplings[] :=
+    Module[{subst, weinbergAngle, g1Def, g2Def, g3Def, result},
+           subst = { SARAH`Mass[SARAH`VectorW] -> FlexibleSUSY`MWDRbar,
+                     SARAH`Mass[SARAH`VectorZ] -> FlexibleSUSY`MZDRbar,
+                     SARAH`electricCharge      -> FlexibleSUSY`EDRbar };
+           weinbergAngle = Parameters`FindSymbolDef[SARAH`Weinberg] /. subst;
+           g1Def = (Parameters`FindSymbolDef[SARAH`hyperchargeCoupling]
+                    / Parameters`GetGUTNormalization[SARAH`hyperchargeCoupling]) /. subst;
+           g2Def = (Parameters`FindSymbolDef[SARAH`leftCoupling]
+                    / Parameters`GetGUTNormalization[SARAH`leftCoupling]) /. subst;
+           g3Def = (Parameters`FindSymbolDef[SARAH`strongCoupling]
+                    / Parameters`GetGUTNormalization[SARAH`strongCoupling]) /. subst;
+           result = Parameters`CreateLocalConstRefs[{weinbergAngle, g1Def, g2Def, g3Def}] <>
+                    "const double " <> CConversion`ToValidCSymbolString[SARAH`Weinberg] <>
+                    " = " <> CConversion`RValueToCFormString[weinbergAngle] <> ";\n" <>
+                    "new_g1 = " <> CConversion`RValueToCFormString[g1Def] <> ";\n" <>
+                    "new_g2 = " <> CConversion`RValueToCFormString[g2Def] <> ";\n" <>
+                    "new_g3 = " <> CConversion`RValueToCFormString[g3Def] <> ";\n";
            Return[result];
           ];
 

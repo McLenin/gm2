@@ -3,12 +3,24 @@ BeginPackage["WriteOut`", {"SARAH`", "TextFormatting`", "CConversion`", "Paramet
 
 ReplaceInFiles::usage="Replaces tokens in files.";
 PrintParameters::usage="Creates parameter printout statements";
+WriteSLHAExtparBlock::usage="";
 WriteSLHAMassBlock::usage="";
 WriteSLHAMixingMatricesBlocks::usage="";
 WriteSLHAModelParametersBlocks::usage="";
-ReadUnfixedParameters::usage="";
+WriteSLHAMinparBlock::usage="";
+ReadLesHouchesInputParameters::usage="";
+StringJoinWithSeparator::usage="Joins a list of strings with a given separator string";
 
 Begin["`Private`"];
+
+StringJoinWithSeparator[strings_List, separator_String] :=
+    Module[{result = "", i},
+           For[i = 1, i <= Length[strings], i++,
+               If[i > 1, result = result <> separator;];
+               result = result <> ToString[strings[[i]]];
+              ];
+           Return[result];
+          ];
 
 (*
  * @brief Replaces tokens in files.
@@ -37,13 +49,25 @@ ReplaceInFiles[files_List, replacementList_List] :=
              ];
           ];
 
+TransposeIfVector[parameter_, CConversion`ArrayType[__]] :=
+    SARAH`Tp[parameter];
+
+TransposeIfVector[parameter_, CConversion`VectorType[__]] :=
+    SARAH`Tp[parameter];
+
+TransposeIfVector[parameter_, _] := parameter;
+
 PrintParameter[Null, streamName_String] := "";
 
 PrintParameter[parameter_, streamName_String] :=
-    Module[{parameterName},
-           parameterName = CConversion`ToValidCSymbolString[parameter /. a_[Susyno`LieGroups`i1,SARAH`i2] :> a];
+    Module[{parameterName, parameterNameWithoutIndices, expr, type},
+           parameterNameWithoutIndices = parameter /.
+                                         a_[Susyno`LieGroups`i1,SARAH`i2] :> a;
+           parameterName = CConversion`ToValidCSymbolString[parameterNameWithoutIndices];
+           type = Parameters`GetType[parameterNameWithoutIndices];
+           expr = TransposeIfVector[parameterNameWithoutIndices, type];
            Return[streamName <> " << \"" <> parameterName <> " = \" << " <>
-                  parameterName <> " << '\\n';\n"];
+                  CConversion`RValueToCFormString[expr] <> " << '\\n';\n"];
           ];
 
 PrintParameters[parameters_List, streamName_String] :=
@@ -79,7 +103,7 @@ WriteSLHAMass[massMatrix_TreeMasses`FSMassMatrix] :=
                   pdg = Abs[pdgList[[i]]];
                   If[pdg != 0,
                      eigenstateNameStr = CConversion`RValueToCFormString[eigenstateName] <> "_" <> ToString[i];
-                     massNameStr = CConversion`RValueToCFormString[FlexibleSUSY`M[eigenstateName[i]]];
+                     massNameStr = CConversion`RValueToCFormString[FlexibleSUSY`M[eigenstateName[i-1]]];
                      result = result <> "<< FORMAT_MASS(" <> ToString[pdg] <>
                               ", " <> massNameStr <> ", \"" <> eigenstateNameStr <> "\")\n";
                     ];
@@ -106,6 +130,43 @@ WriteSLHAMassBlock[massMatrices_List] :=
                     "std::ostringstream mass;\n\n" <>
                     susyMassesStr <> smMassesStr <>
                     "slha_io.set_block(mass);\n";
+           Return[result];
+          ];
+
+WriteParameterTuple[{key_?NumberQ, parameter_}, streamName_String] :=
+    Module[{parameterStr},
+           parameterStr = CConversion`ToValidCSymbolString[parameter];
+           streamName <> " << FORMAT_ELEMENT(" <> ToString[key] <> ", input." <>
+           parameterStr <> ", \"" <> parameterStr <> "\");\n"
+          ];
+
+WriteParameterTuple[expr_, _] :=
+    Block[{},
+          Print["Error: not a valid {key,parameter} tuple: ", expr];
+          ""
+         ];
+
+WriteSLHAExtparBlock[{}] := "";
+
+WriteSLHAExtparBlock[extpar_List] :=
+    Module[{result, body = ""},
+           (body = body <> WriteParameterTuple[#, "extpar"])& /@ extpar;
+           result = "std::ostringstream extpar;\n\n" <>
+                    "extpar << \"Block EXTPAR\\n\";\n" <>
+                    body <>
+                    "slha_io.set_block(extpar);\n";
+           Return[result];
+          ];
+
+WriteSLHAMinparBlock[{}] := "";
+
+WriteSLHAMinparBlock[minpar_List] :=
+    Module[{result, body = ""},
+           (body = body <> WriteParameterTuple[#, "minpar"])& /@ minpar;
+           result = "std::ostringstream minpar;\n\n" <>
+                    "minpar << \"Block MINPAR\\n\";\n" <>
+                    body <>
+                    "slha_io.set_block(minpar);\n";
            Return[result];
           ];
 
@@ -231,12 +292,12 @@ ReadSLHABlock[{parameter_, blockName_Symbol}] :=
            paramStr <> ");\n"
           ];
 
-ReadUnfixedParameters[unfixedParameters_List] :=
-    Module[{result = "", modelParameters, unfixedNames, rules},
-           unfixedNames = (#[[1]])& /@ unfixedParameters;
-           rules = Rule[#[[1]], #[[2]]]& /@ unfixedParameters;
-           (* get block names of all unfixed parameters (unfixedNames) *)
-           modelParameters = Select[GetSLHAModelParameters[], MemberQ[unfixedNames,#[[1]]]&];
+ReadLesHouchesInputParameters[lesHouchesInputParameters_List] :=
+    Module[{result = "", modelParameters, names, rules},
+           names = (#[[1]])& /@ lesHouchesInputParameters;
+           rules = Rule[#[[1]], #[[2]]]& /@ lesHouchesInputParameters;
+           (* get block names of all les Houches input parameters (names) *)
+           modelParameters = Select[GetSLHAModelParameters[], MemberQ[names,#[[1]]]&];
            modelParameters = {#[[1]] /. rules, #[[2]]}& /@ modelParameters;
            (result = result <> ReadSLHABlock[#])& /@ modelParameters;
            Return[result];

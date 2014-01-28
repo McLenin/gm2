@@ -33,6 +33,44 @@ CreateValidAnomDimName[names_] :=
            Quit[1];
           ];
 
+CreateNameWithIndices[sym_Symbol, _CConversion`ScalarType] :=
+    sym;
+
+CreateNameWithIndices[sym_Symbol, _CConversion`VectorType] :=
+    sym[Susyno`LieGroups`i1];
+
+CreateNameWithIndices[sym_Symbol, _CConversion`MatrixType] :=
+    sym[Susyno`LieGroups`i1, SARAH`i2];
+
+CreateNameWithIndices[sym_, _] := sym;
+
+GuessType[{field1_, field2_}] :=
+    Module[{f1, f2, dim1, dim2, type},
+           f1 = GetHead[field1];
+           f2 = GetHead[field2];
+           dim1 = TreeMasses`GetDimension[f1];
+           dim2 = TreeMasses`GetDimension[f2];
+           Which[dim1 > 1 && dim2 > 1,
+                 type = CConversion`MatrixType[CConversion`realScalarCType, dim1, dim2];,
+                 dim1 > 1,
+                 type = CConversion`VectorType[CConversion`realScalarCType, dim1];,
+                 dim2 > 1,
+                 type = CConversion`VectorType[CConversion`realScalarCType, dim2];,
+                 True,
+                 type = CConversion`ScalarType[CConversion`realScalarCType];
+                ];
+           Return[type];
+          ];
+
+StripIndices[expr_, _CConversion`ScalarType] :=
+    expr /. a_[Susyno`LieGroups`i1, SARAH`i2] :> a;
+
+StripIndices[expr_, _CConversion`MatrixType] :=
+    expr /. a_[Susyno`LieGroups`i1, SARAH`i2] :> a;
+
+StripIndices[expr_, _CConversion`VectorType] :=
+    expr /. { a_[Susyno`LieGroups`i1] :> a, a_[SARAH`i2] :> a };
+
 (* Converts SARAH anomalous dimensions
  *
  * SARAH format:
@@ -44,19 +82,21 @@ CreateValidAnomDimName[names_] :=
  * @param gij list of SARAH-like formated anomalous dimensions
  *)
 ConvertSarahAnomDim[gij_List] :=
-    Module[{lst = {}, adim, i, name, type, dim},
+    Module[{lst = {}, adim, i, name, type, expr, nameWithIndices, unitMatrix},
            For[i = 1, i <= Length[gij], i++,
                adim = gij[[i]];
                (* adim[[1]] == {name1,name2}, adim[[2]] == 1-loop anom. dim *)
                name = CreateValidAnomDimName[adim[[1]]];
-               If[FreeQ[adim[[2]], a_[Susyno`LieGroups`i1,SARAH`i2]],
-                  type = CConversion`ScalarType["double"];,
-                  dim = TreeMasses`GetDimension[adim[[1,1]]];
-                  type = CConversion`MatrixType["Eigen::Matrix<double," <>
-                                                ToString[dim] <> "," <>
-                                                ToString[dim] <> ">", dim, dim];
-                 ];
-               AppendTo[lst, AnomalousDimension[name, type, Drop[adim, 1]]];
+               type = GuessType[adim[[1]]];
+               expr = Drop[adim, 1];
+               (* append family indices to make ProtectTensorProducts work *)
+               nameWithIndices = CreateNameWithIndices[name, type];
+               (* protect tensor products *)
+               expr = Simplify /@ ((CConversion`ProtectTensorProducts[#, nameWithIndices])& /@ expr);
+               (* strip indices *)
+               unitMatrix = CreateUnitMatrix[type];
+               expr = StripIndices[expr /. Kronecker[Susyno`LieGroups`i1,SARAH`i2] -> unitMatrix, type];
+               AppendTo[lst, AnomalousDimension[name, type, expr]];
               ];
            Return[lst];
           ];
@@ -66,7 +106,7 @@ CreateAnomDimPrototypes[anomDim_AnomalousDimension] :=
     Module[{prototypes, name, type},
            name = ToValidCSymbolString[GetName[anomDim]];
            type = GetType[anomDim];
-           prototypes = CreateGetterPrototype[name, GetCParameterType[type]];
+           prototypes = CreateGetterPrototype[name, CConversion`CreateCType[type]];
            Return[prototypes];
           ];
 
@@ -83,15 +123,11 @@ CreateAnomDimFunction[anomDim_AnomalousDimension] :=
            name = ToValidCSymbolString[GetName[anomDim]];
            unitMatrix = CreateUnitMatrix[type];
            (* one-loop *)
-           exprOneLoop = (CConversion`oneOver16PiSqr * GetAnomDim1Loop[anomDim]) /.
-                         { Kronecker[Susyno`LieGroups`i1,SARAH`i2] -> unitMatrix,
-                           a_[Susyno`LieGroups`i1,SARAH`i2] :> a };
+           exprOneLoop = CConversion`oneOver16PiSqr * GetAnomDim1Loop[anomDim];
            body = "\nanomDim = " <> RValueToCFormString[exprOneLoop] <> ";\n";
            (* two-loop *)
            If[Length[GetAllAnomDims[anomDim]] > 1,
-              exprTwoLoop = (CConversion`twoLoop * GetAnomDim2Loop[anomDim]) /.
-                            { Kronecker[Susyno`LieGroups`i1,SARAH`i2] -> unitMatrix,
-                              a_[Susyno`LieGroups`i1,SARAH`i2] :> a };
+              exprTwoLoop = CConversion`twoLoop * GetAnomDim2Loop[anomDim];
               body = body <> "\nif (get_loops() > 1) {\n" <>
                      IndentText["anomDim += " <> RValueToCFormString[exprTwoLoop]] <>
                      ";\n}\n";
@@ -102,7 +138,7 @@ CreateAnomDimFunction[anomDim_AnomalousDimension] :=
                   inputParsDecl <>
                   body <>
                   "\nreturn anomDim;\n";
-           def  = GetCParameterType[type] <> " CLASSNAME::get_" <>
+           def  = CConversion`CreateCType[type] <> " CLASSNAME::get_" <>
                   name <> "() const\n{\n" <> IndentText[body] <> "}\n\n";
            Return[def];
           ];

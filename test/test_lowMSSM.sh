@@ -7,11 +7,11 @@
 
 BASEDIR=$(dirname $0)
 
-mssm_input="$BASEDIR/../templates/MSSM/LesHouches.in.MSSM"
+mssm_input="$BASEDIR/../model_files/MSSM/LesHouches.in.MSSM"
 mssm_output="$BASEDIR/MSSM.out.spc"
 lowmssm_input="$BASEDIR/lowMSSM.in.spc"
 lowmssm_output="$BASEDIR/lowMSSM.out.spc"
-rel_error="1.3e-4"
+rel_error="3.9e-4"
 
 sed_cmd=`command -v sed`
 awk_cmd=`command -v awk`
@@ -80,7 +80,19 @@ if test ! -r "$lowmssm_output"; then
     exit 1
 fi
 
-diff=`$numdiff_cmd --relative-tolerance $rel_error $mssm_output $lowmssm_output`
+# remove mixing matrix blocks because we don't want to compare objects
+# with phase ambiguities
+
+cp $mssm_output $mssm_output~
+$awk_cmd -f $BASEDIR/remove_input_blocks.awk < $mssm_output~ > $mssm_output
+$sed_cmd -i~ -e '172,$d' $mssm_output
+$sed_cmd -i~ -e '172,$d' $lowmssm_output
+
+diff=`$numdiff_cmd\
+ --absolute-tolerance=1.0e-12\
+ --relative-tolerance=$rel_error\
+ $mssm_output $lowmssm_output`
+
 diff_without_comments=`echo $diff | $sed_cmd -e '/^ *#/d' | $sed_cmd -e '/^+++/d'`
 
 if [ -n "$diff_without_comments" ]; then

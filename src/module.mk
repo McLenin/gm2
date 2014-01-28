@@ -52,11 +52,11 @@ LIBFLEXI     := $(DIR)/$(MODNAME)$(LIBEXT)
 all-$(MODNAME): $(LIBFLEXI)
 
 clean-$(MODNAME):
-		rm -rf $(LIBFLEXI_OBJ)
+		-rm -f $(LIBFLEXI_OBJ)
 
 distclean-$(MODNAME): clean-$(MODNAME)
-		rm -rf $(LIBFLEXI_DEP)
-		rm -rf $(LIBFLEXI)
+		-rm -f $(LIBFLEXI_DEP)
+		-rm -f $(LIBFLEXI)
 
 clean::         clean-$(MODNAME)
 
@@ -73,7 +73,7 @@ $(LIBFLEXI): $(LIBFLEXI_OBJ)
 		$(MAKELIB) $@ $^
 else
 $(LIBFLEXI): $(LIBFLEXI_OBJ)
-		$(MAKELIB) $@ $^ $(BOOSTTHREADLIBS) $(GSLLIBS) $(LAPACKLIBS)
+		$(MAKELIB) $@ $^ $(BOOSTTHREADLIBS) $(THREADLIBS) $(GSLLIBS) $(LAPACKLIBS)
 endif
 
 ALLDEP += $(LIBFLEXI_DEP)

@@ -66,11 +66,11 @@ EXAMPLES_EXE := \
 all-$(MODNAME): $(EXAMPLES_EXE)
 
 clean-$(MODNAME):
-		rm -rf $(EXAMPLES_OBJ)
+		-rm -f $(EXAMPLES_OBJ)
 
 distclean-$(MODNAME): clean-$(MODNAME)
-		rm -rf $(EXAMPLES_DEP)
-		rm -rf $(EXAMPLES_EXE)
+		-rm -f $(EXAMPLES_DEP)
+		-rm -f $(EXAMPLES_EXE)
 
 clean::         clean-$(MODNAME)
 
@@ -80,17 +80,17 @@ ifneq ($(findstring lattice,$(ALGORITHMS)),)
 $(LATTICE_EXAMPLES_DEP) $(LATTICE_EXAMPLES_OBJ): CPPFLAGS += $(EIGENFLAGS) $(GSLFLAGS) $(BOOSTFLAGS)
 
 $(DIR)/lattice_fmssm.x: $(DIR)/lattice_fmssm.o $(LIBFMSSM) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(LAPACKLIBS) $(FLIBS)
+		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(THREADLIBS) $(LAPACKLIBS) $(FLIBS)
 
 $(DIR)/lattice_numerical_fmssm.x: $(DIR)/lattice_numerical_fmssm.o $(LIBFMSSM) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(LAPACKLIBS) $(FLIBS)
+		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(THREADLIBS) $(LAPACKLIBS) $(FLIBS)
 
 $(DIR)/lattice_fmssm_fmssmn.x: $(DIR)/lattice_fmssm_fmssmn.o \
 			       $(LIBFMSSMN) $(LIBFMSSM) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(LAPACKLIBS) $(FLIBS)
+		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(THREADLIBS) $(LAPACKLIBS) $(FLIBS)
 $(DIR)/lattice_numerical_fmssm_fmssmn.x: $(DIR)/lattice_numerical_fmssm_fmssmn.o \
 			       $(LIBFMSSMN) $(LIBFMSSM) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(LAPACKLIBS) $(FLIBS)
+		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(THREADLIBS) $(LAPACKLIBS) $(FLIBS)
 endif
 
 ifdef BUILD_SWITCH_EXAMPLES
@@ -100,7 +100,7 @@ ifeq ($(shell $(FSCONFIG) --with-fmssm --with-MSSM),yes yes)
 $(SWITCH_EXAMPLES_DEP) $(SWITCH_EXAMPLES_OBJ): CPPFLAGS += $(EIGENFLAGS) $(GSLFLAGS) $(BOOSTFLAGS)
 
 $(DIR)/switch_MSSM.x: $(DIR)/switch_MSSM.o $(LIBMSSM) $(LIBFMSSM) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(LAPACKLIBS) $(LOOPTOOLSLIBS) $(FLIBS)
+		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(THREADLIBS) $(LAPACKLIBS) $(LOOPTOOLSLIBS) $(FLIBS)
 endif
 endif
 endif

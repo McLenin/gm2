@@ -105,5 +105,6 @@ void printRow(ostream & o, double x);
 /// Returns true if f's a nan. Unfortunately, the behaviour of this function
 /// is not standardised across all platforms yet. 
 bool testNan(double f);
+
 #endif
 

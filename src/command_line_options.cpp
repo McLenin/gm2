@@ -21,6 +21,7 @@
 #include "logger.hpp"
 
 #include <cstdio>
+#include <cstdlib>
 
 namespace flexiblesusy {
 
@@ -80,7 +81,7 @@ void Command_line_options::parse(int argc, const char* argv[])
 
 void Command_line_options::print_version(std::ostream& ostr) const
 {
-   ostr << VERSION << std::endl;
+   ostr << FLEXIBLESUSY_VERSION << std::endl;
 }
 
 void Command_line_options::print_usage(std::ostream& ostr) const
