@@ -127,6 +127,7 @@ showbuild:
 	@echo "MODELS             = $(MODELS)"
 	@echo "ADDONS             = $(ADDONS)"
 	@echo "ALGORITHMS         = $(ALGORITHMS)"
+	@echo "ADDONS             = $(ADDONS)"
 	@echo ""
 	@echo "CXX                = $(CXX)"
 	@echo "CPPFLAGS           = $(CPPFLAGS)"
