@@ -25,6 +25,8 @@ LIBGM2_TEMPLATES := \
 
 GM2_EXE    := $(DIR)/gm2.x
 
+METACODE_STAMP_GM2 := $(DIR)/00_DELETE_ME_TO_RERUN_METACODE
+
 .PHONY:         all-$(MODNAME) clean-$(MODNAME) distclean-$(MODNAME)
 
 all-$(MODNAME): $(LIBGM2)
@@ -40,17 +42,28 @@ clean::         clean-$(MODNAME)
 
 distclean::     distclean-$(MODNAME)
 
-$(DIR)/gm2.cpp: $(DIR)/start.m $(LIBGM2_META) $(LIBGM2_TEMPLATES) $(META_SRC) $(TEMPLATES)
+$(DIR)/gm2.hpp \
+$(DIR)/gm2.cpp \
+$(DIR)/gm2_1loop.hpp \
+$(DIR)/gm2_1loop.cpp \
+: run-metacode-$(MODNAME)
+		@true
+
+run-metacode-$(MODNAME): $(METACODE_STAMP_GM2)
+		@true
+
+ifeq ($(ENABLE_META),yes)
+$(METACODE_STAMP_GM2): $(DIR)/start.m $(LIBGM2_META) $(LIBGM2_TEMPLATES) $(META_SRC) $(TEMPLATES)
 		$(MATH) -run "Get[\"$<\"]; Quit[]"
-
-$(DIR)/gm2.hpp: $(DIR)/gm2.cpp
+		@touch "$(METACODE_STAMP_GM2)"
+		@echo "Note: to regenerate GM2 source files," \
+		      "please remove the file "
+		@echo "\"$(METACODE_STAMP_GM2)\" and run make"
+		@echo "---------------------------------"
+else
+$(METACODE_STAMP_GM2):
 		@true
-
-$(DIR)/gm2_1loop.cpp: $(DIR)/gm2.cpp
-		@true
-
-$(DIR)/gm2_1loop.hpp: $(DIR)/gm2.cpp
-		@true
+endif
 
 $(LIBGM2_DEP) $(LIBGM2_OBJ) $(DIR)/gm2.o: CPPFLAGS += $(GSLFLAGS) $(EIGENFLAGS) $(BOOSTFLAGS)
 
