@@ -30,11 +30,11 @@ GM2_EXE    := $(DIR)/gm2.x
 all-$(MODNAME): $(LIBGM2)
 
 clean-$(MODNAME):
-		rm -rf $(LIBGM2_OBJ)
+		-rm -f $(LIBGM2_OBJ)
 
 distclean-$(MODNAME): clean-$(MODNAME)
-		rm -rf $(LIBGM2_DEP)
-		rm -rf $(LIBGM2)
+		-rm -f $(LIBGM2_DEP)
+		-rm -f $(LIBGM2)
 
 clean::         clean-$(MODNAME)
 
