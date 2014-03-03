@@ -607,6 +607,7 @@ check_models() {
 
 #_____________________________________________________________________
 check_addons() {
+    checking_msg "addons"
     addons=`echo $ADDONS | tr ',' ' '`
     ADDONS=""
     for a in ${addons}; do
@@ -623,11 +624,14 @@ check_addons() {
                     continue
                 else
                     message "Error: addon directory \"$BASEDIR/addons/$a\" does not exist!"
-                    message "Please create the directory and put an addon in it."
+                    message "Please create the directory and put a module.mk file into it."
                     exit 1
                 fi ;;
         esac
     done
+
+    result "ok"
+    logmsg "   Addons: ${ADDONS}"
 }
 
 #_____________________________________________________________________
