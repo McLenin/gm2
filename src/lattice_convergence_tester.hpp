@@ -28,9 +28,8 @@ class Lattice;
 template<>
 class Convergence_tester<Lattice> {
 public:
-   // temporarily to avoid vtable error
-   // virtual ~Convergence_tester();
-   virtual unsigned int max_iterations() {}
+   virtual ~Convergence_tester() {}
+   virtual unsigned int max_iterations() { return 0; }
 };
 
 }

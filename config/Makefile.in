@@ -53,6 +53,9 @@ ALLTST   :=
 # flexiblesusy-config script
 FSCONFIG := @FSCONFIG@
 
+# script which lists the SARAH model files
+SARAH_DEP_GEN := @SARAH_DEP_GEN@
+
 .PHONY:  all allsrc allexec alllib alltest clean-executables \
 	 clean clean-dep distclean showbuild tag release
 
@@ -76,7 +79,9 @@ ifneq ($(MAKECMDGOALS),doc)
 ifeq ($(ENABLE_COMPILE),yes)
 ifeq ($(findstring clean-,$(MAKECMDGOALS)),)
 ifeq ($(findstring distclean-,$(MAKECMDGOALS)),)
+ifeq ($(findstring doc-,$(MAKECMDGOALS)),)
 -include $(ALLDEP)
+endif
 endif
 endif
 endif
@@ -93,7 +98,7 @@ alllib:   $(ALLLIB)
 alltest:  $(ALLTST)
 
 clean-dep:
-	rm -rf $(ALLDEP)
+	-rm -f $(ALLDEP)
 
 %.d: %.cpp
 # -MT '$*.o' ensures that the target contains the full path
@@ -105,11 +110,13 @@ clean-dep:
 	sed 's|.*\.o:|$*.o:|' > $@
 
 clean-executables:
-	rm -f $(ALLEXE)
+	-rm -f $(ALLEXE)
 
 distclean::
 	-rm -f Makefile
-	-rm -f flexiblesusy-config
+	-rm -f $(FSCONFIG)
+	-rm -f $(SARAH_DEP_GEN)
+	-rm -f config.boost config.log config.math config.sarah config.status
 
 showbuild:
 	@echo "PKGNAME            = $(PKGNAME)"
@@ -118,8 +125,8 @@ showbuild:
 	@echo ""
 	@echo "MATH               = $(MATH)"
 	@echo "MODELS             = $(MODELS)"
-	@echo "ALGORITHMS         = $(ALGORITHMS)"
 	@echo "ADDONS             = $(ADDONS)"
+	@echo "ALGORITHMS         = $(ALGORITHMS)"
 	@echo ""
 	@echo "CXX                = $(CXX)"
 	@echo "CPPFLAGS           = $(CPPFLAGS)"

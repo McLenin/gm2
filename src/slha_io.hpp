@@ -27,6 +27,7 @@
 #include "slhaea.h"
 #include "logger.hpp"
 #include "error.hpp"
+#include "wrappers.hpp"
 
 namespace softsusy {
    class QedQcd;
@@ -61,6 +62,50 @@ namespace flexiblesusy {
 #define FORMAT_SPINFO(n,str)                                            \
    boost::format(spinfo_formatter) % n % str
 
+/**
+ * @class SLHA_io
+ * @brief Handles reading and writing of SLHA files
+ *
+ * Reading: There are two ways to read block entries from SLHA files:
+ * a) using the read_block() function with a %SLHA_io::Tuple_processor
+ * or b) using the read_entry() function for each entry.  Note, that
+ * a) is much faster than b) (more than 1000 times) because b) needs
+ * to search for the block each time read_entry() is called.
+ *
+ * Example how to use a tuple processor (fast!):
+ * \code{.cpp}
+void process_tuple(double* array, int key, double value) {
+   array[key] = value;
+}
+
+void read_file() {
+   using namespace std::placeholders;
+   double array[1000];
+
+   SLHA_io reader;
+   reader.read_from_file("file.slha");
+
+   SLHA_io::Tuple_processor processor
+      = std::bind(&process_tuple, array, _1, _2);
+
+   reader.read_block("MyBlock", processor);
+}
+ * \endcode
+ *
+ * Example how to use a for loop (slow!):
+ * \code{.cpp}
+void read_file() {
+   double array[1000];
+
+   SLHA_io reader;
+   reader.read_from_file("file.slha");
+
+   for (int i = 0; i < 1000; i++) {
+      array[i] = reader.read_entry("MyBlock", i);
+   }
+}
+ * \endcode
+ */
 class SLHA_io {
 public:
    typedef std::function<void(int, double)> Tuple_processor;
@@ -68,6 +113,10 @@ public:
    struct Modsel {
       double parameter_output_scale; ///< key = 12
       Modsel() : parameter_output_scale(0.) {}
+   };
+   struct Extpar {
+      double input_scale; ///< key = 0
+      Extpar() : input_scale(0.) {}
    };
 
    class ReadError : public Error {
@@ -84,31 +133,54 @@ public:
 
    // reading functions
    void fill(softsusy::QedQcd&) const;
+   const Extpar& get_extpar() const { return extpar; }
    const Modsel& get_modsel() const { return modsel; }
    void read_from_file(const std::string&);
    void read_block(const std::string&, const Tuple_processor&) const;
    template <class Derived>
    void read_block(const std::string&, Eigen::MatrixBase<Derived>&) const;
    double read_entry(const std::string&, int) const;
+   void read_extpar();
    void read_modsel();
 
    // writing functions
    void set_data(const SLHAea::Coll& data_) { data = data_; }
    void set_block(const std::ostringstream&, Position position = back);
    void set_block(const std::string&, double, const std::string&, double scale = 0.);
+   template<class Scalar, int M, int N>
+   void set_block(const std::string&, const Eigen::Matrix<std::complex<Scalar>, M, N>&, const std::string&, double scale = 0.);
    template <class Derived>
    void set_block(const std::string&, const Eigen::MatrixBase<Derived>&, const std::string&, double scale = 0.);
    void set_block(const std::string&, const DoubleMatrix&, const std::string&, double scale = 0.);
    void set_block(const std::string&, const ComplexMatrix&, const std::string&, double scale = 0.);
+   void set_sminputs(const softsusy::QedQcd&);
    void write_to_file(const std::string&);
    void write_to_stream(std::ostream& = std::cout);
 
 private:
    SLHAea::Coll data;          ///< SHLA data
+   Extpar extpar;              ///< data from block EXTPAR
    Modsel modsel;              ///< data from block MODSEL
+   template <class Scalar>
+   static Scalar convert_to(const std::string&); ///< convert string
    static void process_sminputs_tuple(softsusy::QedQcd&, int, double);
+   static void process_extpar_tuple(Extpar&, int, double);
    static void process_modsel_tuple(Modsel&, int, double);
 };
+
+template <class Scalar>
+Scalar SLHA_io::convert_to(const std::string& str)
+{
+   Scalar value;
+   try {
+      value = SLHAea::to<Scalar>(str);
+   }  catch (const boost::bad_lexical_cast& error) {
+      const std::string msg("cannot convert string \"" + str + "\" to "
+                            + typeid(Scalar).name());
+      throw ReadError(msg);
+   }
+   return value;
+}
 
 template <class Derived>
 void SLHA_io::read_block(const std::string& block_name, Eigen::MatrixBase<Derived>& matrix) const
@@ -126,16 +198,36 @@ void SLHA_io::read_block(const std::string& block_name, Eigen::MatrixBase<Derive
          continue;
 
       if (line->size() >= 3) {
-         const int i = SLHAea::to<int>((*line)[0]) - 1;
-         const int k = SLHAea::to<int>((*line)[1]) - 1;
+         const int i = convert_to<int>((*line)[0]) - 1;
+         const int k = convert_to<int>((*line)[1]) - 1;
          if (0 <= i && i < rows && 0 <= k && k < cols) {
-            const double value = SLHAea::to<double>((*line)[2]);
+            const double value = convert_to<double>((*line)[2]);
             matrix(i,k) = value;
          }
-      } else {
-         WARNING(block_name << " entry has less than 3 columns");
       }
    }
+}
+
+template<class Scalar, int NRows, int NCols>
+void SLHA_io::set_block(const std::string& name,
+                        const Eigen::Matrix<std::complex<Scalar>, NRows, NCols>& matrix,
+                        const std::string& symbol, double scale)
+{
+   std::ostringstream ss;
+   ss << "Block " << name;
+   if (scale != 0.)
+      ss << " Q= " << FORMAT_NUMBER(scale);
+   ss << '\n';
+
+   for (int i = 1; i <= NRows; ++i)
+      for (int k = 1; k <= NCols; ++k) {
+         ss << boost::format(mixing_matrix_formatter) % i % k
+            % Re(matrix(i-1,k-1))
+            % ("Re(" + symbol + "(" + std::to_string(i) + ","
+               + std::to_string(k) + "))");
+      }
+
+   set_block(ss);
 }
 
 template <class Derived>

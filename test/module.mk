@@ -4,6 +4,7 @@ MODNAME  := test
 TEST_SRC := \
 		$(DIR)/test_logger.cpp \
 		$(DIR)/test_betafunction.cpp \
+		$(DIR)/test_linalg2.cpp \
 		$(DIR)/test_minimizer.cpp \
 		$(DIR)/test_problems.cpp \
 		$(DIR)/test_rk.cpp \
@@ -11,6 +12,10 @@ TEST_SRC := \
 		$(DIR)/test_sminput.cpp \
 		$(DIR)/test_slha_io.cpp \
 		$(DIR)/test_wrappers.cpp
+
+ifneq ($(findstring lattice,$(ALGORITHMS)),)
+TEST_SRC +=
+endif
 
 ifneq ($(findstring two_scale,$(ALGORITHMS)),)
 TEST_SRC += \
@@ -53,6 +58,7 @@ ifeq ($(shell $(FSCONFIG) --with-SoftsusyNMSSM --with-SMSSM),yes yes)
 TEST_SRC += \
 		$(DIR)/test_SMSSM_beta_functions.cpp \
 		$(DIR)/test_SMSSM_ewsb.cpp \
+		$(DIR)/test_SMSSM_one_loop_spectrum.cpp \
 		$(DIR)/test_SMSSM_tree_level_spectrum.cpp
 endif
 ifeq ($(shell $(FSCONFIG) --with-sm),yes)
@@ -78,9 +84,11 @@ TEST_SH += \
 endif
 
 TEST_META := \
+		test/test_BetaFunction.m \
 		test/test_CConversion.m \
 		test/test_Constraint.m \
 		test/test_EWSB.m \
+		test/test_Parameters.m \
 		test/test_TreeMasses.m \
 		test/test_SelfEnergies.m \
 		test/test_TextFormatting.m \
@@ -110,15 +118,15 @@ TEST_LOG      := $(TEST_EXE_LOG) $(TEST_SH_LOG) $(TEST_META_LOG)
 all-$(MODNAME): $(TEST_EXE)
 
 clean-$(MODNAME)-log:
-		rm -rf $(TEST_LOG)
+		-rm -f $(TEST_LOG)
 
 clean-$(MODNAME):
-		rm -rf $(TEST_OBJ)
-		rm -rf $(TEST_LOG)
+		-rm -f $(TEST_OBJ)
+		-rm -f $(TEST_LOG)
 
 distclean-$(MODNAME): clean-$(MODNAME)
-		rm -rf $(TEST_DEP)
-		rm -rf $(TEST_EXE)
+		-rm -f $(TEST_DEP)
+		-rm -f $(TEST_EXE)
 
 $(DIR)/%.x.log: $(DIR)/%.x
 		@rm -f $@
@@ -162,6 +170,9 @@ $(DIR)/test_logger.x: $(DIR)/test_logger.o $(LIBFLEXI) $(LIBLEGACY)
 
 $(DIR)/test_betafunction.x: $(DIR)/test_betafunction.o $(LIBFLEXI) $(LIBLEGACY)
 		$(CXX) -o $@ $^ $(BOOSTTESTLIBS)
+
+$(DIR)/test_linalg2.x: $(DIR)/test_linalg2.o
+		$(CXX) -o $@ $^ $(BOOSTTESTLIBS) $(LAPACKLIBS) $(FLIBS)
 
 $(DIR)/test_minimizer.x: $(DIR)/test_minimizer.o $(LIBFLEXI)
 		$(CXX) -o $@ $^ $(BOOSTTESTLIBS) $(GSLLIBS)
@@ -218,7 +229,7 @@ $(DIR)/test_MSSM_low_scale_constraint.x: $(LIBSoftsusyMSSM) $(LIBMSSM) $(LIBFLEX
 
 $(DIR)/test_MSSM_susy_scale_constraint.x: $(LIBSoftsusyMSSM) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
 
-$(DIR)/test_MSSM_slha_output.x: $(DIR)/test_MSSM_slha_output.o $(LIBMSSM) $(LIBSoftsusyMSSM) $(LIBFLEXI) $(LIBLEGACY) $(EXAMPLES_EXE) $(DIR)/input_MSSM.slha2
+$(DIR)/test_MSSM_slha_output.x: $(DIR)/test_MSSM_slha_output.o $(LIBMSSM) $(LIBSoftsusyMSSM) $(LIBFLEXI) $(LIBLEGACY) $(EXAMPLES_EXE) $(DIR)/test_MSSM_slha_output.in.spc
 		$(CXX) -o $@ $< $(LIBMSSM) $(LIBSoftsusyMSSM) $(LIBFLEXI) $(LIBLEGACY) $(BOOSTTESTLIBS) $(GSLLIBS)
 
 $(DIR)/test_MSSM_spectrum.x: $(LIBSoftsusyMSSM) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
@@ -244,6 +255,8 @@ $(DIR)/test_NMSSM_tree_level_spectrum.x: $(LIBSoftsusyMSSM) $(LIBSoftsusyNMSSM) 
 $(DIR)/test_SMSSM_beta_functions.x: $(LIBSoftsusyMSSM) $(LIBSoftsusyNMSSM) $(LIBSMSSM) $(LIBFLEXI) $(LIBLEGACY)
 
 $(DIR)/test_SMSSM_ewsb.x: $(LIBSoftsusyMSSM) $(LIBSoftsusyNMSSM) $(LIBSMSSM) $(LIBFLEXI) $(LIBLEGACY)
+
+$(DIR)/test_SMSSM_one_loop_spectrum.x: $(LIBSoftsusyMSSM) $(LIBSoftsusyNMSSM) $(LIBSMSSM) $(LIBFLEXI) $(LIBLEGACY)
 
 $(DIR)/test_SMSSM_tree_level_spectrum.x: $(LIBSoftsusyMSSM) $(LIBSoftsusyNMSSM) $(LIBSMSSM) $(LIBFLEXI) $(LIBLEGACY)
 

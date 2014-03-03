@@ -1,0 +1,59 @@
+FlexibleSUSY-0.5.3 [January, 21 2014]
+
+ * Bugfix (commit 44903c): correcting malformed print out in
+   config/list_sarah_model_files.sh in case model files do not exist
+
+ * Bugfix (commit 3aae11): Prevent hard-coding of the running Weinberg
+   angle in terms of the gauge couplings
+
+ * Bugfix (commit ce4a73): Generalize calculation of gauge couplings
+   at the low-scale (fixes #1)
+
+ * Vertices are saved in a file to avoid repeating same calculation.
+
+FlexibleSUSY-0.5.2 [January 14, 2014]
+
+ * Bugfix (commit 58f8f9): Convert beta functions which are identical
+   zero to the data type of the corresponding parameter.
+
+ * Bugfix (commit e5f937): Correcting check of SARAH patch level
+   against minimum required patch level.
+
+ * Bugfix (commit e2d43b): Adapting free phases of fermion fields if
+   mass is less than zero.
+
+ * Bugfix (commit e777e1): Converting indices to C convention in
+   tree-level EWSB equations.
+
+ * Set minimum required SARAH version to 4.0.3, because it includes a
+   bug fix in the index structure of the charged Higgs self-energies.
+
+ * Allow setting of single matrix/ vector elements in the constraints.
+
+ * Model files are now in the directory model_files/
+   (instead of templates/)
+
+ * The command line arguments of the createmodel script changed.
+   Please see ./createmodel --help for more details.
+
+ * Add support for the LHInput[p] command in constraints, which reads
+   the parameter `p' from the SLHA input file.
+
+ * Constrain time used to simplify the beta functions (default: 120
+   seconds per beta function).  To change the time constraint, set
+   FlexibleSUSY`FSSimplifyBetaFunctionsTimeConstraint .
+
+ * Avoid swapping by distributing the calculation of the two-scale
+   beta functions among multiple .cpp files.
+
+ * Introduce separate meta code stamp (triggers running of the meta
+   code) with name models/<model-name>/00_DELETE_ME_TO_RERUN_METACODE
+
+FlexibleSUSY-0.5.1 [November 23, 2013]
+
+ * Handle parameters of type vector in the beta functions.
+
+FlexibleSUSY-0.5 [November 18, 2013]
+
+ * Store particle masses as Eigen::Array and mixing matrices as
+   Eigen::Matrix.

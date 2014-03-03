@@ -20,6 +20,7 @@
 #include "wrappers.hpp"
 #include "lowe.h"
 #include "linalg.h"
+#include "ew_input.hpp"
 
 #include <fstream>
 
@@ -27,6 +28,7 @@ namespace flexiblesusy {
 
 SLHA_io::SLHA_io()
    : data()
+   , extpar()
    , modsel()
 {
 }
@@ -46,6 +48,15 @@ void SLHA_io::read_from_file(const std::string& file_name)
       msg << "cannot read SLHA file: \"" << file_name << "\"";
       throw ReadError(msg.str());
    }
+}
+
+void SLHA_io::read_extpar()
+{
+   using namespace std::placeholders;
+   SLHA_io::Tuple_processor extpar_processor
+      = std::bind(&SLHA_io::process_extpar_tuple, std::ref(extpar), _1, _2);
+
+   read_block("EXTPAR", extpar_processor);
 }
 
 void SLHA_io::read_modsel()
@@ -77,29 +88,9 @@ void SLHA_io::read_block(const std::string& block_name, const Tuple_processor& p
          continue;
 
       if (line->size() >= 2) {
-         const std::string key_str((*line)[0]), value_str((*line)[1]);
-         int key;
-         double value;
-
-         try {
-            key = SLHAea::to<int>(key_str);
-         } catch (const boost::bad_lexical_cast& error) {
-            const std::string msg("cannot convert " + block_name
-                                  + " key to int: " + key_str);
-            throw ReadError(msg);
-         }
-
-         try {
-            value = SLHAea::to<double>((*line)[1]);
-         } catch (const boost::bad_lexical_cast& error) {
-            const std::string msg("cannot convert " + block_name + " entry "
-                                  + key_str + " to double: " + value_str);
-            throw ReadError(msg);
-         }
-
+         const int key = convert_to<int>((*line)[0]);
+         const double value = convert_to<double>((*line)[1]);
          processor(key, value);
-      } else {
-         WARNING(block_name << " entry has less than 2 columns");
       }
    }
 }
@@ -122,16 +113,7 @@ double SLHA_io::read_entry(const std::string& block_name, int key) const
       return 0.;
    }
 
-   double entry;
-
-   try {
-      entry = SLHAea::to<double>(line->at(1));
-   } catch (const boost::bad_lexical_cast& error) {
-      std::ostringstream msg;
-      msg << "cannot convert " << block_name << " entry " << key
-          << " to double";
-      throw ReadError(msg.str());
-   }
+   const double entry = convert_to<double>(line->at(1));
 
    return entry;
 }
@@ -202,6 +184,33 @@ void SLHA_io::set_block(const std::string& name, const ComplexMatrix& matrix,
    set_block(ss);
 }
 
+void SLHA_io::set_sminputs(const softsusy::QedQcd& qedqcd)
+{
+   std::ostringstream ss;
+
+   const double alphaEmInv = 1./qedqcd.displayAlpha(ALPHA);
+
+   ss << "Block SMINPUTS\n";
+   ss << FORMAT_ELEMENT( 1, alphaEmInv                   , "alpha^(-1) SM MSbar(MZ)");
+   ss << FORMAT_ELEMENT( 2, 1.166370000e-05              , "G_Fermi");
+   ss << FORMAT_ELEMENT( 3, qedqcd.displayAlpha(ALPHAS)  , "alpha_s(MZ) SM MSbar");
+   ss << FORMAT_ELEMENT( 4, Electroweak_constants::MZ    , "MZ(pole)");
+   ss << FORMAT_ELEMENT( 5, qedqcd.displayMbMb()         , "mb(mb) SM MSbar");
+   ss << FORMAT_ELEMENT( 6, qedqcd.displayPoleMt()       , "mtop(pole)");
+   ss << FORMAT_ELEMENT( 7, qedqcd.displayPoleMtau()     , "mtau(pole)");
+   ss << FORMAT_ELEMENT( 8, 0                            , "mnu3(pole)");
+   ss << FORMAT_ELEMENT(11, qedqcd.displayMass(mElectron), "melectron(pole)");
+   ss << FORMAT_ELEMENT(12, 0                            , "mnu1(pole)");
+   ss << FORMAT_ELEMENT(13, qedqcd.displayMass(mMuon)    , "mmuon(pole)");
+   ss << FORMAT_ELEMENT(14, 0                            , "mnu2(pole)");
+   ss << FORMAT_ELEMENT(21, qedqcd.displayMass(mDown)    , "md");
+   ss << FORMAT_ELEMENT(22, qedqcd.displayMass(mUp)      , "mu");
+   ss << FORMAT_ELEMENT(23, qedqcd.displayMass(mStrange) , "ms");
+   ss << FORMAT_ELEMENT(24, qedqcd.displayMass(mCharm)   , "mc");
+
+   set_block(ss);
+}
+
 void SLHA_io::write_to_file(const std::string& file_name)
 {
    std::ofstream ofs(file_name);
@@ -214,6 +223,24 @@ void SLHA_io::write_to_stream(std::ostream& ostr)
       ostr << data;
    else
       ERROR("cannot write SLHA file");
+}
+
+/**
+ * fill Extpar struct from given key - value pair
+ *
+ * @param extpar EXTPAR data
+ * @param key SLHA key in EXTPAR
+ * @param value value corresponding to key
+ */
+void SLHA_io::process_extpar_tuple(Extpar& extpar, int key, double value)
+{
+   if (key == 0) {
+      if (value > -std::numeric_limits<double>::epsilon()) {
+         extpar.input_scale = value;
+      } else {
+         WARNING("Negative values for EXTPAR entry 0 currently not supported");
+      }
+   }
 }
 
 /**
@@ -233,13 +260,13 @@ void SLHA_io::process_modsel_tuple(Modsel& modsel, int key, double value)
    case 6:
    case 11:
    case 21:
-      WARNING("MODSEL key " << key << " currently not supported");
+      WARNING("Key " << key << " in Block MODSEL currently not supported");
       break;
    case 12:
       modsel.parameter_output_scale = value;
       break;
    default:
-      WARNING("Unrecognized key in MODSEL: " << key);
+      WARNING("Unrecognized key " << key << " in Block MODSEL");
       break;
    }
 }

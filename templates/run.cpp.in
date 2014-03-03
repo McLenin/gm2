@@ -28,6 +28,7 @@
 #include "command_line_options.hpp"
 
 #include <iostream>
+#include <cstdlib>
 
 int main(int argc, const char* argv[])
 {
@@ -54,7 +55,7 @@ int main(int argc, const char* argv[])
          slha_io.fill(program_options);
       } catch (const Error& error) {
          ERROR(error.what());
-         return 1;
+         return EXIT_FAILURE;
       }
    }
    oneset.toMz(); // run SM fermion masses to MZ
@@ -66,6 +67,8 @@ int main(int argc, const char* argv[])
       program_options.get(Program_options::max_iterations));
    spectrum_generator.set_calculate_sm_masses(
       program_options.get(Program_options::calculate_sm_masses) >= 1.0);
+   spectrum_generator.set_input_scale(
+      slha_io.get_input_scale());
    spectrum_generator.set_parameter_output_scale(
       slha_io.get_parameter_output_scale());
    spectrum_generator.set_pole_mass_loop_order(
@@ -80,21 +83,23 @@ int main(int argc, const char* argv[])
    const Problems<@ModelName@_info::NUMBER_OF_PARTICLES>& problems
       = spectrum_generator.get_problems();
 
+   // output
+   slha_io.set_spinfo(problems);
+   slha_io.set_sminputs(oneset);
+   slha_io.set_minpar(input);
+   slha_io.set_extpar(input);
+   if (!problems.have_serious_problem())
+      slha_io.set_spectrum(model);
+
    if (slha_output_file.empty()) {
-      if (problems.have_serious_problem()) {
-         problems.print(std::cout);
-         std::cout << '\n';
-      } else {
-         model.print(std::cout);
-         // spectrum_generator.write_spectrum("@ModelName@_spectrum.dat");
-         // spectrum_generator.write_running_couplings("@ModelName@_rge_running.dat");
-      }
+      slha_io.write_to_stream(std::cout);
    } else {
-      slha_io.set_spinfo(problems);
-      if (!problems.have_serious_problem())
-         slha_io.set_spectrum(model);
       slha_io.write_to_file(slha_output_file);
    }
+
+   // model.print(std::cout);
+   // spectrum_generator.write_spectrum("@ModelName@_spectrum.dat");
+   // spectrum_generator.write_running_couplings("@ModelName@_rge_running.dat");
 
    const int exit_code = spectrum_generator.get_exit_code();
 
