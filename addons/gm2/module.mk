@@ -52,7 +52,11 @@ $(DIR)/gm2_1loop.cpp: $(DIR)/gm2.cpp
 $(DIR)/gm2_1loop.hpp: $(DIR)/gm2.cpp
 		@true
 
-$(LIBGM2_DEP) $(LIBGM2_OBJ) $(DIR)/gm2.o: CPPFLAGS += $(EIGENFLAGS)
+$(LIBGM2_DEP) $(LIBGM2_OBJ) $(DIR)/gm2.o: CPPFLAGS += $(GSLFLAGS) $(EIGENFLAGS) $(BOOSTFLAGS)
+
+ifeq ($(ENABLE_LOOPTOOLS),yes)
+$(LIBGM2_DEP) $(LIBGM2_OBJ) $(DIR)/gm2.o: CPPFLAGS += $(LOOPTOOLSFLAGS)
+endif
 
 $(LIBGM2): $(LIBGM2_OBJ)
 		$(MAKELIB) $@ $^
