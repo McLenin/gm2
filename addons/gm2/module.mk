@@ -58,7 +58,7 @@ $(LIBGM2): $(LIBGM2_OBJ)
 		$(MAKELIB) $@ $^
 
 $(GM2_EXE): $(DIR)/gm2.o $(LIBGM2) $(LIBMSSM) $(LIBFLEXI) $(LIBLEGACY)
-		$(CXX) -o $@ $(abspath $^) $(GSLLIBS) $(FLIBS)
+		$(CXX) -o $@ $(call abspathx,$^) $(GSLLIBS) $(BOOSTTHREADLIBS) $(THREADLIBS) $(LAPACKLIBS) $(FLIBS) $(LOOPTOOLSLIBS)
 
 ALLDEP += $(LIBGM2_DEP)
 ALLLIB += $(LIBGM2)
