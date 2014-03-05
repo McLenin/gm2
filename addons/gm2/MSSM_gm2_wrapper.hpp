@@ -16,22 +16,22 @@
 // <http://www.gnu.org/licenses/>.
 // ====================================================================
 
-// File generated at @DateAndTime@
+// File generated at Wed 5 Mar 2014 14:17:07
 
 #ifndef MSSM_gm2_w
 #define MSSM_gm2_w
 
 #include "wrappers.hpp"
 #include "logger.hpp"
-#include "@ModelName@_two_scale_model.hpp"
+#include "MSSM_two_scale_model.hpp"
 
 namespace flexiblesusy {
 namespace gm2 {
 
-class MSSM_gm2_wrapper : public @ModelName@<Two_scale> {
+class MSSM_gm2_wrapper : public MSSM<Two_scale> {
 public:
    MSSM_gm2_wrapper()
-   : @ModelName@<Two_scale>(),
+   : MSSM<Two_scale>(),
    MW(80.385), MZ(91.1876), TB(10.), EL(0.303), ME(0.00051),
    MM(0.105), ML(1.777), MU(0.04), MC(1.5), MT(173.5), MD(0.04), MS(0.15),
    MB(3.), gY(0.35), EL0(0.30282212), MUDIM(454.7), MA0(500.)

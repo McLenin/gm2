@@ -16,7 +16,7 @@
 // <http://www.gnu.org/licenses/>.
 // ====================================================================
 
-// File generated at @DateAndTime@
+// File generated at Wed 5 Mar 2014 14:17:07
 
 #include "MSSM_gm2_wrapper.hpp"
 
@@ -64,7 +64,7 @@ void MSSM_gm2_wrapper::convert_parameters() {
 
 void MSSM_gm2_wrapper::calculate_DRbar_parameters() {
    convert_parameters();
-   @ModelName@<Two_scale>::calculate_DRbar_parameters();
+   MSSM<Two_scale>::calculate_DRbar_parameters();
    Eigen::Matrix<double,6,6> mass_matrix_6x6(get_mass_matrix_Se());
    Eigen::Matrix<double,2,2> mass_matrix_2x2;
    mass_matrix_2x2(0,0) = mass_matrix_6x6(1,1);

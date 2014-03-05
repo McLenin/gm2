@@ -1,12 +1,16 @@
+#include "test_gm2_2loop.hpp"
+#include "MSSM_input_parameters.hpp"
+#include "MSSM_slha_io.hpp"
+#include "MSSM_spectrum_generator.hpp"
+#include "program_options.hpp"
+#include "lowe.h"
 #include "test.h"
-#include "test_gm2_1loop.hpp"
 #include "MSSM_gm2_wrapper.hpp"
-#include "gm2_2loop.hpp"
 
 namespace flexiblesusy {
 namespace gm2{
 
-void setup_SPS1b(gm2::MSSM_gm2_wrapper& model) {
+void setup_bm1(gm2::MSSM_gm2_wrapper& model) {
    Eigen::Matrix<double,3,3> Yu;
    Eigen::Matrix<double,3,3> Yd;
    Eigen::Matrix<double,3,3> Ye;
@@ -21,7 +25,7 @@ void setup_SPS1b(gm2::MSSM_gm2_wrapper& model) {
    double ML = 1.777;
    double MU = 0.04151;
    double MC = 1.5;
-   double MT = 173.2;
+   double MT = 173.5;
    double MD = 0.0415;
    double MS = 0.15;
    double MB = 3.;
@@ -58,25 +62,25 @@ void setup_SPS1b(gm2::MSSM_gm2_wrapper& model) {
                    0, 0.00587557,          0,
                    0,          0,    0.10199;
 
-   Mu = 495.6;
-   TB = 30.;
+   Mu = 350.;
+   TB = 40.;
    MW = 80.385;
    MZ = 91.1876;
-   EL = 0.308274; // 0.31218 corresponding to alpha(MZ)
+   EL = 0.313429;
    g3 = 1.06459;
 
    // soft parameters
-   Ae << 1., 0., 0.,
-         0., 1., 0.,
-         0., 0., -195.8;
+   Ae << 0., 0., 0.,
+         0., 0., 0.,
+         0., 0., 0.;
 
-   Au << 1., 0., 0.,
-         0., 1., 0.,
-         0., 0., -729.3;
+   Au << 0., 0., 0.,
+         0., 0., 0.,
+         0., 0., 0.;
 
-   Ad << 1., 0., 0.,
-         0., 1., 0.,
-         0., 0., -987.4;
+   Ad << 0., 0., 0.,
+         0., 0., 0.,
+         0., 0., 0.;
 
    TYu << -0.0144387,        0,        0,
                    0, -7.64037,        0,
@@ -90,37 +94,37 @@ void setup_SPS1b(gm2::MSSM_gm2_wrapper& model) {
                     0, -1.70609,        0,
                     0,        0, -29.4466;
 
-   BMu = 9194.792;
+   BMu = 52140.8;
 
-   mq2 << sqr(836.2),           0,           0,
-                    0, sqr(836.2),           0,
-                    0,           0,      sqr(762.5);
+   mq2 << 49000000.,         0,          0,
+                  0, 49000000.,          0,
+                  0,         0,  49000000.;
 
-   ml2 << sqr(334.),      0,      0,
-               0, sqr(334.),      0,
-               0,      0, sqr(323.8);
+   ml2 << 160000.,       0,        0,
+                0, 160000.,        0,
+                0,       0, 9000000.;
 
-   mHd2 =  92436.9; // m_1^2
-   mHu2 = -380337.; // m_2^2
+   mHd2 =  92436.9;
+   mHu2 = -380337.;
 
-   md2 << sqr(803.9),          0,          0,
-                   0, sqr(803.9),          0,
-                   0,          0, sqr(780.3);
+   md2 << 49000000.,         0,         0,
+                  0, 49000000.,         0,
+                  0,         0, 49000000.;
 
-   mu2 << sqr(807.5),      0,      0,
-               0, sqr(807.5),      0,
-               0,      0, sqr(670.7);
+   mu2 << 49000000.,         0,          0,
+                  0, 49000000.,          0,
+                  0,         0,  49000000.;
 
-   me2 << sqr(248.3),       0,       0,
-                0, sqr(248.3),       0,
-                0,       0, sqr(218.6);
+   me2 << 160001.,       0,        0,
+                0, 160001.,        0,
+                0,       0, 9000000.;
 
-   MassB =   162.8; // M_1
-   MassWB =  310.9; // M_2
+   MassB =    150.; //  M_1
+   MassWB =   300.; // M_2
    MassG = 1114.45; // M_3
 
-   MUDIM = 706.9;
-   MA0 = 525.5;
+   MUDIM = 454.7;
+   MA0 =   1500.;
 
    // set parameters
    model.set_TB(TB);
@@ -162,7 +166,6 @@ void setup_SPS1b(gm2::MSSM_gm2_wrapper& model) {
    model.set_MA0(MA0);
 
    // calculate tree-level masses
-
    model.calculate_DRbar_parameters();
 }
 
@@ -174,15 +177,17 @@ using namespace gm2;
 
 int main() {
    MSSM_gm2_wrapper model;
-   setup_SPS1b(model);
+   setup_bm1(model);
 
-   double gm2_1loop = calculate_gm2_1loop(model);
-   double amuphotonic = amuChipmPhotonic(model) + amuChi0Photonic(model);
-
-   TEST_CLOSE(amua2LSferm(model), 0.044e-10, 1.e-13);
-   TEST_CLOSE(amua2LCha(model), 0.273e-10, 1.e-13);
-   TEST_CLOSE(gm2_1loop, 33.3412e-10, 1.e-13);
-   TEST_CLOSE(amuphotonic, -2.58408e-10, 1.e-13);
+   TEST_CLOSE(amu1Lapprox(model), 45.05e-10, 5.e-13);
+   double amu2Loopapprox = amu2LFSfapprox(model);
+   model.set_EL(0.31218);
+   model.calculate_DRbar_parameters();
+   TEST_CLOSE(calculate_gm2_1loop(model), 44.0183e-10, 2.e-13);
+   TEST_CLOSE(tan_beta_cor(model), 1.06945, 1.e-4);
+   TEST_CLOSE(( (amuChi0Photonic(model) + amuChipmPhotonic(model))
+                / calculate_gm2_1loop(model) ), -0.079836, 1.e-5);
+   TEST_CLOSE(amu2Loopapprox / calculate_gm2_1loop(model), 0.040, 5.e-4);
 
    return gErrors;
 }

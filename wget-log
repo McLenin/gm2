@@ -1,0 +1,82 @@
+wget: unable to resolve host address `eigen'
+--2013-09-17 16:05:52--  http://3.1.4/
+Resolving 3.1.4... 3.1.0.4
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:09:02--  (try: 2)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:12:13--  (try: 3)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:15:25--  (try: 4)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:18:38--  (try: 5)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:21:52--  (try: 6)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:25:07--  (try: 7)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:28:23--  (try: 8)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:31:40--  (try: 9)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:34:58--  (try:10)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:38:17--  (try:11)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:41:36--  (try:12)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:44:55--  (try:13)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:48:14--  (try:14)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:51:33--  (try:15)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:54:52--  (try:16)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 16:58:11--  (try:17)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 17:01:30--  (try:18)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 17:04:49--  (try:19)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Retrying.
+
+--2013-09-17 17:08:08--  (try:20)  http://3.1.4/
+Connecting to 3.1.4|3.1.0.4|:80... failed: Connection timed out.
+Giving up.
+

@@ -16,7 +16,7 @@
 // <http://www.gnu.org/licenses/>.
 // ====================================================================
 
-// File generated at @DateAndTime@
+// File generated at Wed 5 Mar 2014 14:17:07
 
 #include "gm2_1loop.hpp"
 #include "gm2_2loop.hpp"
